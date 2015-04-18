@@ -1,0 +1,79 @@
+plugins {
+	id 'com.rapidminer.extension' version '0.6.2'
+}
+
+// Define Maven artifact repositories
+repositories {
+    jcenter()
+    maven { 
+    	url 'https://dl.bintray.com/rapidminer/public/' 
+    }
+    maven { 
+    	url 'https://dl.bintray.com/rapidminer/open-source/' 
+    }
+    maven{
+    	url 'http://www.gridgainsystems.com/nexus/content/repositories/external'
+    }
+    maven{
+    	url 'http://repo2.maven.org/maven2/org/springframework/'
+    }
+    maven{
+    	url 'http://repo1.maven.org/maven2/'
+   	}
+}
+
+extensionConfig {
+	name 'Ignite extension'
+
+    /*
+     * The artefact group which will be used when publishing the extensions Jar.
+     * By default it is 'com.rapidminer.extension'.
+     */
+    //groupId = 'com.rapidminer.extension'
+
+    /*
+     * The extension vendor which will be displayed in the extensions about box.
+	 * By default it is 'RapidMiner GmbH'.
+     */
+    //vendor = "RapidMiner GmbH"
+
+    /*
+     * The vendor homepage which will be displayed in the extensions about box.
+     * By default it is 'www.rapidminer.com'.
+     */
+    //homepage = "www.rapidminer.com"
+
+	/*
+	 * The relative path to RapidMiner Studio. It will be used by the
+	 * 'installExtension' task to copy the extension Jar to $rapidminerHome/lib/plugins/ 
+	 */
+	rapidminerHome = '../rapidminer'
+
+	// define RapidMiner version and extension dependencies
+	dependencies {
+       rapidminer '5.3.0'
+       
+       // Only needed for version 5.3.0
+       useAntArtifact true
+
+		//extension namespace: 'text', version: '6.1.0'
+	}
+}
+
+// Define third party library dependencies
+dependencies {
+	//compile 'com.google.guava:guava:18.0'
+	
+	// VLDocking as docking framework (https://code.google.com/p/vldocking/)
+	provided 'com.rapidminer.external:vldocking:1.0.0'
+	
+	compile 'org.apache.ignite:ignite-core:1.0.0-RC1'
+	compile 'org.apache.ignite:ignite-spring:1.0.0-RC1'
+	
+	compile 'org.springframework:spring-beans:4.1.4.RELEASE'
+	compile 'org.springframework:spring-core:4.1.4.RELEASE'
+	compile 'org.springframework:spring-context:4.1.4.RELEASE'
+	compile 'org.springframework:spring-tx:4.1.4.RELEASE'
+	compile 'org.springframework:spring-expression:4.1.4.RELEASE'
+	compile 'org.springframework:spring-aop:4.1.4.RELEASE' 
+}

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src/main/java"/>
+	<classpathentry kind="src" path="src/main/resources"/>
+	<classpathentry kind="src" path="src/test/java"/>
+	<classpathentry kind="src" path="src/test/resources"/>
+	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry exported="true" kind="con" path="org.springsource.ide.eclipse.gradle.classpathcontainer"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/rapidminer"/>
+	<classpathentry kind="lib" path="C:/dev/mgr/libs/ignite-fabric/libs/cache-api-1.0.0.jar"/>
+	<classpathentry kind="lib" path="C:/dev/mgr/libs/ignite-fabric/libs/ignite-core-1.0.0-RC1.jar"/>
+	<classpathentry kind="lib" path="C:/dev/mgr/libs/ignite-fabric/libs/ignite-spring/cache-api-1.0.0.jar"/>
+	<classpathentry kind="lib" path="C:/dev/mgr/libs/ignite-fabric/libs/ignite-spring/commons-logging-1.1.1.jar"/>
+	<classpathentry kind="lib" path="C:/dev/mgr/libs/ignite-fabric/libs/ignite-spring/ignite-spring-1.0.0-RC1.jar"/>
+	<classpathentry kind="lib" path="C:/dev/mgr/libs/ignite-fabric/libs/ignite-spring/spring-aop-4.1.0.RELEASE.jar"/>
+	<classpathentry kind="lib" path="C:/dev/mgr/libs/ignite-fabric/libs/ignite-spring/spring-beans-4.1.0.RELEASE.jar"/>
+	<classpathentry kind="lib" path="C:/dev/mgr/libs/ignite-fabric/libs/ignite-spring/spring-context-4.1.0.RELEASE.jar"/>
+	<classpathentry kind="lib" path="C:/dev/mgr/libs/ignite-fabric/libs/ignite-spring/spring-core-4.1.0.RELEASE.jar"/>
+	<classpathentry kind="lib" path="C:/dev/mgr/libs/ignite-fabric/libs/ignite-spring/spring-expression-4.1.0.RELEASE.jar"/>
+	<classpathentry kind="lib" path="C:/dev/mgr/libs/ignite-fabric/libs/ignite-spring/spring-tx-4.1.0.RELEASE.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
