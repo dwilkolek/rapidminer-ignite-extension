@@ -1,4 +1,4 @@
-RapidMiner Extension Template - toRefactor
+RapidMiner Extension Template
 =============================
 
 A template project for creating a RapidMiner Studio extension. 
