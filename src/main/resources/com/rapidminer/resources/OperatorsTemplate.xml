@@ -2,35 +2,37 @@
 <operators name="template" version="5.0"
 	docbundle="com/rapidminer/resources/i18n/OperatorsDocTemplate">
 	<group key="">
-		<group key="Gridgain">
-			<operator>
-				<key>Task</key>
-				<class>eu.wilkolek.rm.operator.Task</class>
-				<replaces>TextInformationExtraction</replaces>
-			</operator>
-			
-			<operator>
-				<key>TaskEvaluator</key>
-				<class>eu.wilkolek.rm.operator.TaskEvaluator</class>
-				<replaces>TextInformationExtraction</replaces>
-			</operator>
-
-			<operator>
-				<key>SubprocessDeclaration</key>
-				<class>eu.wilkolek.rm.operator.SubprocessDeclaration</class>
-				<replaces>TextInformationExtraction</replaces>
-			</operator>
-			
-			<operator>
-				<key>SubprocessDeclarationInvocation</key>
-				<class>eu.wilkolek.rm.operator.SubprocessDeclarationInvocation</class>
-				<replaces>TextInformationExtraction</replaces>
-			</operator>
-			<operator>
-				<key>Ignite</key>
-				<class>eu.wilkolek.rm.operator.IgniteOperator</class>
-				<replaces>TextInformationExtraction</replaces>
-			</operator>		
+		<group key="Paralell Distributed Jobs">
+			<group key="Java">
+				<operator>
+					<key>Job</key>
+					<class>eu.wilkolek.pardi.operator.java.Job</class>
+					<replaces>TextInformationExtraction</replaces>
+				</operator>
+				
+				<operator>
+					<key>Job Evaluator</key>
+					<class>eu.wilkolek.pardi.operator.java.JobEvaluator</class>
+					<replaces>TextInformationExtraction</replaces>
+				</operator>
+	
+				<operator>
+					<key>Job Subprocess</key>
+					<class>eu.wilkolek.pardi.operator.java.JobSubprocess</class>
+					<replaces>TextInformationExtraction</replaces>
+				</operator>
+				
+				<operator>
+					<key>Job Subprocess Evaluator</key>
+					<class>eu.wilkolek.pardi.operator.java.JobSubprocessEvaluator</class>
+					<replaces>TextInformationExtraction</replaces>
+				</operator>
+				<operator>
+					<key>Ignite Job Manager</key>
+					<class>eu.wilkolek.pardi.operator.ignite.IgniteJobManager</class>
+					<replaces>TextInformationExtraction</replaces>
+				</operator>		
+			</group>
 		</group>
 	</group>
 </operators>

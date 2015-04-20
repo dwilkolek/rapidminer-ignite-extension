@@ -23,7 +23,7 @@ repositories {
 }
 
 extensionConfig {
-	name 'Ignite extension'
+	name 'pardi_extension'
 
     /*
      * The artefact group which will be used when publishing the extensions Jar.
@@ -35,13 +35,13 @@ extensionConfig {
      * The extension vendor which will be displayed in the extensions about box.
 	 * By default it is 'RapidMiner GmbH'.
      */
-    //vendor = "RapidMiner GmbH"
+    vendor = "Wilko³ek Damian"
 
     /*
      * The vendor homepage which will be displayed in the extensions about box.
      * By default it is 'www.rapidminer.com'.
      */
-    //homepage = "www.rapidminer.com"
+    homepage = "www.wilkolek.eu/pardi"
 
 	/*
 	 * The relative path to RapidMiner Studio. It will be used by the
