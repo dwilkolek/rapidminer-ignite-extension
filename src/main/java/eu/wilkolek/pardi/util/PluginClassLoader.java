@@ -2,18 +2,18 @@ package eu.wilkolek.pardi.util;
 
 import org.apache.ignite.Ignite;
 
-public class GridClassLoader extends ClassLoader {
+public class PluginClassLoader extends ClassLoader {
 	
 	ClassLoader rapidminer;
 	ClassLoader plugin;
 	public Ignite ignite; 
 	
-	public GridClassLoader(ClassLoader rm, ClassLoader plug) {
+	public PluginClassLoader(ClassLoader rm, ClassLoader plug) {
 		this.rapidminer = rm;
 		this.plugin = plug;
 	}
 
-	public GridClassLoader(ClassLoader arg0) {
+	public PluginClassLoader(ClassLoader arg0) {
 		super(arg0);
 		// TODO Auto-generated constructor stub
 	}
@@ -32,10 +32,4 @@ public class GridClassLoader extends ClassLoader {
 		return super.findClass(name);
 	}
 
-	public void setIgnite(Ignite grid) {
-		this.ignite = grid;
-	}
-	public Ignite getIgnite(){
-		return ignite;
-	}
 }

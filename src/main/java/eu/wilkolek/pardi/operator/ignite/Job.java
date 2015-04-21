@@ -1,4 +1,4 @@
-package eu.wilkolek.pardi.operator.java;
+package eu.wilkolek.pardi.operator.ignite;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,10 +26,9 @@ import com.rapidminer.parameter.ParameterType;
 import com.rapidminer.parameter.ParameterTypeBoolean;
 import com.rapidminer.parameter.ParameterTypeString;
 
-import eu.wilkolek.pardi.operator.ignite.IgniteRemoteJob;
 import eu.wilkolek.pardi.types.rapidminer.IOString;
 import eu.wilkolek.pardi.util.Config;
-import eu.wilkolek.pardi.util.GridClassLoader;
+import eu.wilkolek.pardi.util.PluginClassLoader;
 import eu.wilkolek.pardi.util.Helper;
 import eu.wilkolek.pardi.util.XMLTools;
 
@@ -249,7 +248,6 @@ public class Job extends OperatorChain {
 				for (int we = 0; we < keySetForElement.size(); we++) {
 					keySetForJob.add(keySetForElement.get(we).get(i));
 				}
-
 				jobs.add(new IgniteRemoteJob(process.getSource(), i, keySetForJob,
 						id, iteration, macros,xmlTools.getOpNameForJob(process.getSource())));
 			}

@@ -16,7 +16,7 @@ copy "..\rapidminer\lib\plugins\rapidminer-ignite-extension-1.0.0-all.jar" "../r
 echo Copy to node rapidminer 
 copy "..\rapidminer\lib\plugins\rapidminer-ignite-extension-1.0.0-all.jar" "../rapidminer-node/rapidminer/lib/plugins/" /Y
 
-call ..\rapidminer-node\ignite-fabric\bin\ignite.bat
+rem call ..\rapidminer-node\ignite-fabric\bin\ignite.bat
 
 
 rem copy "..\rapidminer\lib\plugins\rapidminer-ggextension-1.0.0-all.jar" "C:/dev/magisterka/mgr/node/rapidminer/lib/plugins/" /Y

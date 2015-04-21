@@ -15,7 +15,7 @@ public class IgniteJobManagerHelper {
 	public static String RESULT = "result";
 	
 	private static File cfgFile = new File(
-			"C:/dev/mgr/node/ignite-fabric/config/default-config.xml");
+			"D:/gitlab/rapidminer-node/ignite-fabric/config/default-config.xml");
 
 	public static File getCfgFile() {
 		return cfgFile;
@@ -25,4 +25,45 @@ public class IgniteJobManagerHelper {
 		IgniteJobManagerHelper.cfgFile = cfgFile;
 	}
 	public static ClassLoader loader;
+	public static IgniteCache<Object, Object> igniteCacheResult;
+	public static IgniteCache<Object, Object> igniteCacheData;
+
+
+	public static void prepareIgniteJobManagerForRemotes(Ignite i){
+		if (i!=null){
+			IgniteJobManagerHelper.ignite = i;
+			IgniteJobManagerHelper.DATACache = i.jcache(DATA);
+			IgniteJobManagerHelper.RESULTCache = i.jcache(RESULT);
+		}
+	}
+	
+	
+	public static String generateResultKey(String a,String z){
+		String key = proposeKey(a,z);
+		
+		while(RESULTCache.containsKey(key)){
+			key=proposeKey(a,z);
+		}
+		return key;
+	}
+	public static String generateDataKey(String a,String z){
+		String key = proposeKey(a,z);
+		
+		while(DATACache.containsKey(key)){
+			key=proposeKey(a,z);
+		}
+		return key;
+	}
+	private static String proposeKey(String a,String z) {
+		Long time = System.nanoTime();
+		Long rnd = Math.round(Math.random()*1000);
+		
+		return a+time.toString()+rnd.toString()+z;
+	}
+
+	public void setIgnite(Ignite ignite){
+		IgniteJobManagerHelper.ignite = ignite;
+		IgniteJobManagerHelper.igniteCacheResult = ignite.jcache(RESULT);
+		IgniteJobManagerHelper.igniteCacheData = ignite.jcache(DATA);
+	}
 }

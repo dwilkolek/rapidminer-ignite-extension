@@ -21,6 +21,9 @@ import com.rapidminer.operator.IOObjectCollection;
 import com.rapidminer.operator.OperatorChain;
 import com.rapidminer.operator.OperatorDescription;
 import com.rapidminer.operator.OperatorException;
+import com.rapidminer.operator.ports.CollectingPortPairExtender;
+import com.rapidminer.operator.ports.InputPort;
+import com.rapidminer.operator.ports.InputPorts;
 import com.rapidminer.operator.ports.OutputPort;
 import com.rapidminer.operator.ports.PortPairExtender;
 import com.rapidminer.operator.ports.PortPairExtender.PortPair;
@@ -29,12 +32,15 @@ import com.rapidminer.parameter.ParameterTypeBoolean;
 
 import eu.wilkolek.pardi.types.rapidminer.AbstractJobManager;
 import eu.wilkolek.pardi.util.Config;
-import eu.wilkolek.pardi.util.GridClassLoader;
+import eu.wilkolek.pardi.util.PluginClassLoader;
 import eu.wilkolek.pardi.util.Helper;
 import eu.wilkolek.pardi.util.ignite.IgniteJobManagerHelper;
 
 public class IgniteJobManager extends AbstractJobManager<IgniteRemoteJob> {
 	
+	
+	HashSet<Integer> generatedKeys = new HashSet<Integer>();
+	Integer currentKeyToReturn = 1;
 	
 	/** This constructor allows subclasses to change the subprocess' name. */
 	protected IgniteJobManager(OperatorDescription description,
@@ -88,10 +94,7 @@ public class IgniteJobManager extends AbstractJobManager<IgniteRemoteJob> {
 			}	
 			IgniteJobManagerHelper.ignite = Ignition.start(IgniteJobManagerHelper.getCfgFile()
 					.getAbsolutePath());
-			Helper.out("Ignite start");
-			((GridClassLoader) Thread.currentThread()
-					.getContextClassLoader()).setIgnite(IgniteJobManagerHelper.ignite);
-			
+			Helper.out("Ignite start");	
 			
 			IgniteJobManagerHelper.DATACache = IgniteJobManagerHelper.ignite.jcache(IgniteJobManagerHelper.DATA);
 			IgniteJobManagerHelper.RESULTCache = IgniteJobManagerHelper.ignite.jcache(IgniteJobManagerHelper.RESULT);
@@ -101,7 +104,7 @@ public class IgniteJobManager extends AbstractJobManager<IgniteRemoteJob> {
 	private void prepareClassLoader() {
 		IgniteConfiguration cfg = new IgniteConfiguration();
 		IgniteJobManagerHelper.loader = cfg.getClass().getClassLoader();
-		GridClassLoader wcl = new GridClassLoader(
+		PluginClassLoader wcl = new PluginClassLoader(
 				RapidMiner.class.getClassLoader(), cfg.getClass()
 						.getClassLoader());
 
@@ -155,12 +158,19 @@ public class IgniteJobManager extends AbstractJobManager<IgniteRemoteJob> {
 	}
 
 	@Override
-	public void storeData(Object key, IOObject obj) {
+	public String storeData(Object key, IOObject obj) {
 		asureInstanceIsReady();
-		String k = (String)key;
+		String k;
+		if (key==null){
+			k = IgniteJobManagerHelper.generateDataKey("d", "it");
+		}else{
+			k = (String)key;
+		}
 		IgniteJobManagerHelper.DATACache.put(k, obj);
+		return k;
 	}
-
+	
+	
 	@Override
 	public void storeResult(Object key, IOObject obj) {
 		asureInstanceIsReady();
@@ -182,7 +192,40 @@ public class IgniteJobManager extends AbstractJobManager<IgniteRemoteJob> {
 		String k = (String)key;
 		return IgniteJobManagerHelper.RESULTCache.get(k);
 	}
-	
+	@Override
+	public ArrayList<HashMap<Integer, IOObject>> processResponseToArray(
+			List<Future<String>> resultKeys) {
+
+		Iterator<Future<String>> resultKeysIterator = resultKeys.iterator();
+		ArrayList<HashMap<Integer, IOObject>> outputSets = new ArrayList<HashMap<Integer, IOObject>>();
+		Integer i = 0;
+		while (resultKeysIterator.hasNext()) {
+			try {
+				String code = resultKeysIterator.next().get();
+				if (!code.isEmpty()){
+					String[] cacheKeys = code.split(";");
+					for (String cacheKey : cacheKeys) {
+						// 0 - JobID, 1- iteration , 2 - outputPortNumber
+						String[] values = cacheKey.split("_");
+						Integer outputPortNumber = Integer.parseInt(values[2]);
+						
+						if (outputSets.get(i) == null){
+							outputSets.add(new HashMap<Integer, IOObject>());
+						}
+						outputSets.get(i).put(outputPortNumber, Helper.masterOperator.retriveResult(cacheKey));
+					}
+				}
+				i++;
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ExecutionException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		return outputSets;
+	}
 	@Override
 	public HashMap<Integer, HashMap<Integer, IOObject>> processResponse(
 			List<Future<String>> resultKeys) {
@@ -220,7 +263,25 @@ public class IgniteJobManager extends AbstractJobManager<IgniteRemoteJob> {
 		}
 		return outputSets;
 	}
+	@Override
+	public void toOutput(
+			ArrayList<String> cacheKeys,
+			InputPorts outputExtender) {
+		Iterator<InputPort> iterator = outputExtender.getAllPorts().iterator();
 	
+		int portNo = 0;
+		while (iterator.hasNext()) {
+			portNo++;
+
+			InputPort inputPort = iterator.next();
+
+			if (inputPort.isConnected()) {
+				inputPort.receive(retriveData(cacheKeys.get(portNo)));				
+			}
+
+		}
+		
+	}
 	@Override
 	public void toOutput(
 			HashMap<Integer, HashMap<Integer, IOObject>> outputSet,
@@ -246,17 +307,34 @@ public class IgniteJobManager extends AbstractJobManager<IgniteRemoteJob> {
 		}
 		
 	}
-
 	@Override
-	public Callable<IgniteRemoteJob> createJob(HashMap<String, Object> params) {
-		// TODO Auto-generated method stub
-		return null;
+	public void toOutput(
+			HashMap<Integer, IOObject> outputSet,
+			CollectingPortPairExtender outExtender) {
+		Iterator<PortPair> iterator = outputExtender.getManagedPairs().iterator();
+		Helper.out("managed pairs size: "
+				+ outputExtender.getManagedPairs().size());
+		int portNo = 0;
+		while (iterator.hasNext()) {
+			portNo++;
+
+			OutputPort outputPort = iterator.next().getOutputPort();
+
+			if (outputPort.isConnected() && outputSet.get(portNo) != null) {
+				outputPort.deliver(outputSet.get(portNo));
+			}
+
+		}
+		
+	}
+	@Override
+	public List<Future<String>> invokeAll() throws InterruptedException {
+		return IgniteJobManagerHelper.ignite.executorService(IgniteJobManagerHelper.ignite.cluster().forRemotes()).invokeAll(jobList);
 	}
 
-	@Override
-	public Class<IgniteRemoteJob> jobReturnType() {
-		return IgniteRemoteJob.class;
-	}
+	
+
+
 		
 	
 }

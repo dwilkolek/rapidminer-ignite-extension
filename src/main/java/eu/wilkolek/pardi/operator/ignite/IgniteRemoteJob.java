@@ -51,7 +51,6 @@ public class IgniteRemoteJob implements Callable<Object>, Serializable {
 		}
 	}
 		
-	private int rmKey;
 	private Integer id;
 	private int forJobId = -1;
 	private ArrayList<String> cacheKeys;

@@ -1,5 +1,6 @@
 package eu.wilkolek.pardi.types.rapidminer;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -10,6 +11,8 @@ import java.util.concurrent.Future;
 import com.rapidminer.operator.IOObject;
 import com.rapidminer.operator.OperatorChain;
 import com.rapidminer.operator.OperatorDescription;
+import com.rapidminer.operator.ports.CollectingPortPairExtender;
+import com.rapidminer.operator.ports.InputPorts;
 import com.rapidminer.operator.ports.PortPairExtender;
 
 public abstract class AbstractJobManager<V> extends OperatorChain {
@@ -17,6 +20,8 @@ public abstract class AbstractJobManager<V> extends OperatorChain {
 	public static final String FLUSH_CACHE = "Flush cache";
 	public static final String DELAYED_EXECUTION = "Delayed execution";
 
+	protected ArrayList<RemoteJob> jobList = new ArrayList<RemoteJob>();
+	
 	protected PortPairExtender inputExtender = new PortPairExtender("iin",
 			getInputPorts(), getSubprocess(0).getInnerSources());
 
@@ -43,7 +48,7 @@ public abstract class AbstractJobManager<V> extends OperatorChain {
 
 	abstract public void removeAllResults();
 	
-	abstract public void storeData(Object key, IOObject obj);
+	abstract public String storeData(Object key, IOObject obj);
 	
 	abstract public void storeResult(Object key, IOObject obj);
 
@@ -53,13 +58,23 @@ public abstract class AbstractJobManager<V> extends OperatorChain {
 
 	abstract public HashMap<Integer, HashMap<Integer, IOObject>> processResponse(
 			List<Future<String>> resultKeys);
+	abstract public ArrayList<HashMap<Integer, IOObject>> processResponseToArray(
+			List<Future<String>> resultKeys);
+	
+	abstract public void toOutput(
+			ArrayList<String> outputSet,
+			InputPorts outputExtender);
+	
+	abstract public void toOutput(
+			HashMap<Integer, IOObject> outputSet,
+			CollectingPortPairExtender outExtender);
+	abstract public List<Future<String>> invokeAll() throws InterruptedException;
+	
+	public void addJob(RemoteJob job){
+		jobList.add(job);
+	}
 
 	abstract public void toOutput(
 			HashMap<Integer, HashMap<Integer, IOObject>> outputSet,
 			PortPairExtender outputExtender);
-	
-	abstract public Callable<V> createJob(HashMap<String, Object> params);
-	
-	abstract public Class jobReturnType();
-	
 }

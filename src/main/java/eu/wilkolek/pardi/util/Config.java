@@ -32,6 +32,6 @@ public class Config {
 	public static String JOBSubprocess = "Job Subprocess";
 	public static String JOBSubprocessEvaluator = "Job Subprocess Evaluator";
 	public static String extensionName = "pardi_extension";
-	
-	public static String version = "1.1";
+	public static String ExecutionUnitContainer = "ExecutionUnitContainer";
+	public static String version = "1.2";
 }

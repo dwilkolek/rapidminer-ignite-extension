@@ -1,4 +1,4 @@
-package eu.wilkolek.pardi.operator.java;
+package eu.wilkolek.pardi.operator.ignite;
 
 import java.util.List;
 

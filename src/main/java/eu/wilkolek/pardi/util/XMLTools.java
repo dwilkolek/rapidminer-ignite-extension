@@ -6,15 +6,26 @@ import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
 import org.springframework.expression.spel.ast.OpNE;
+import org.w3c.dom.Document;
 
 import com.rapidminer.Process;
+import com.rapidminer.io.process.XMLExporter;
+import com.rapidminer.operator.ExecutionUnit;
 import com.rapidminer.operator.Operator;
 import com.rapidminer.operator.OperatorException;
 import com.rapidminer.operator.ports.PortException;
 import com.rapidminer.tools.XMLException;
 
-import eu.wilkolek.pardi.operator.java.Job;
+import eu.wilkolek.pardi.operator.ignite.Job;
+import eu.wilkolek.pardi.operator.rapidminer.ExecutionUnitContainer;
 import eu.wilkolek.pardi.types.rapidminer.IOString;
 
 public class XMLTools {
@@ -155,7 +166,24 @@ public class XMLTools {
 		return builder.toString();
 	}
 
+	public String processXML(
+			final Operator operator, 
+			final String xmlOriginal,
+			final String newOperatorName,
+			final String operatorClass) {
+		Helper.saveToFile("before", xmlOriginal);
+		String xml;
+		StringBuilder builder = new StringBuilder();
+		xml = operator.cloneOperator(newOperatorName, true).getXML(false);
+		xml = xml.replace(	"class=\""+Config.extensionName+":"+operatorClass+"\"",
+							"class=\"process\"");
+		Helper.saveToFile("before1", xml);
+		xml = xml.replace("gin", "input").replace("gou", "result");
+		Helper.saveToFile("before1x", xml);
+		return xml;
+	}
 
+	
 	private String getOpNameFromLine(String line) {
 		String pattern = "name=\""+"([0-9A-Za-z\\ \\(\\)]+)"+"\"";
 		Pattern opPattern = Pattern.compile(pattern);
@@ -254,4 +282,44 @@ public class XMLTools {
 		}
 		return null;
 	}
+
+	public String createProcessXmlFromSubprocess(Operator op, String input, String output, String opName){
+		XMLExporter xmlExporter = new XMLExporter();
+		try {
+			ExecutionUnitContainer euc = new ExecutionUnitContainer(op.getOperatorDescription());
+
+			//1
+			
+			Document doc = xmlExporter.exportSingleOperator(op);
+			DOMSource domSource = new DOMSource(doc);
+			StringWriter writer = new StringWriter();
+			StreamResult result = new StreamResult(writer);
+			TransformerFactory tf = TransformerFactory.newInstance();
+			Transformer transformer = tf.newTransformer();
+			transformer.transform(domSource, result);
+			
+			Helper.saveToFile("xmlExport", writer.toString());
+			
+			String operatorXml = writer.toString();
+			
+			//2
+			Process proc = new Process();
+			proc.getRootOperator().addOperator(euc, 1);
+			String operatorXml2 = proc.getRootOperator().getXML(false);
+			Helper.saveToFile("xmlExport2", writer.toString());
+			return operatorXml2;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (TransformerConfigurationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (TransformerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return "";
+	}
+
 }
