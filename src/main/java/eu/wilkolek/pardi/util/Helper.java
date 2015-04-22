@@ -2,7 +2,11 @@ package eu.wilkolek.pardi.util;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.ArrayList;
 import java.util.Date;
+
+import com.rapidminer.operator.IOObject;
+import com.rapidminer.operator.IOObjectCollection;
 
 import eu.wilkolek.pardi.types.rapidminer.AbstractJobManager;
 
@@ -41,5 +45,7 @@ public class Helper {
 		}
 
 	}
+	
+	
 	
 }

@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 import com.rapidminer.MacroHandler;
@@ -15,6 +17,7 @@ import com.rapidminer.io.process.XMLExporter;
 import com.rapidminer.operator.ExecutionUnit;
 import com.rapidminer.operator.IOContainer;
 import com.rapidminer.operator.IOObject;
+import com.rapidminer.operator.IOObjectCollection;
 import com.rapidminer.operator.OperatorChain;
 import com.rapidminer.operator.OperatorDescription;
 import com.rapidminer.operator.OperatorException;
@@ -56,39 +59,55 @@ public class LoopOperator extends OperatorChain {
 			getSubprocess(0).getInnerSinks(), getOutputPorts());
 
 	private int currentIteration = 0;
-	private XMLTools xmlTools= new XMLTools();
+	private XMLTools xmlTools = new XMLTools();
+
+//	public LoopOperator(OperatorDescription description) {
+//		super(description, "LoopOperator");
+//
+//		inputExtender.start();
+//		outputExtender.start();
+//
+//		getTransformer().addRule(inputExtender.makePassThroughRule());
+//		getTransformer().addRule(new SubprocessTransformRule(getSubprocess(0)));
+//		getTransformer().addRule(outputExtender.makePassThroughRule());
+//
+//		addValue(new ValueDouble("iteration",
+//				"The iteration currently performed by this looping operator.") {
+//			@Override
+//			public double getDoubleValue() {
+//				return currentIteration;
+//			}
+//		});
+//	}
+	/** Creates an empty operator chain. */
 	public LoopOperator(OperatorDescription description) {
-		super(description, "LoopOperator");
-
-		inputExtender.start();
-		outputExtender.start();
-
-		getTransformer().addRule(inputExtender.makePassThroughRule());
-		getTransformer().addRule(new SubprocessTransformRule(getSubprocess(0)));
-		getTransformer().addRule(outputExtender.makePassThroughRule());
-
-		addValue(new ValueDouble("iteration",
-				"The iteration currently performed by this looping operator.") {
-			@Override
-			public double getDoubleValue() {
-				return currentIteration;
-			}
-		});
+		this(description, "LoopOperator");
 	}
 
+	/** This constructor allows subclasses to change the subprocess' name. */
+	protected LoopOperator(OperatorDescription description, String subProcessName) {
+		super(description, subProcessName);
+		inputExtender.start();
+		outputExtender.start();
+		getTransformer().addRule(inputExtender.makePassThroughRule());
+	}
 	@Override
 	public void doWork() throws OperatorException {
-		OperatorDescription desc = this.getProcess().getRootOperator().getOperatorDescription();
-		
-		
+		try{
+		OperatorDescription desc = this.getProcess().getRootOperator()
+				.getOperatorDescription();
+
+		clearAllInnerSinks();
+		inputExtender.passDataThrough();
+
 		XMLExporter ex = new XMLExporter();
-				
+
 		String xml = this.getXML(false);
 
 		IOString procesXML = new IOString();
-		xml = (xmlTools.processXML(this, xml,"Dupa","Loop"));
-		Helper.saveToFile("tools",xml);
-		
+		xml = (xmlTools.processXML(this, xml, "Dupa", "Loop"));
+		Helper.saveToFile("tools", xml);
+
 		String iterationMacroName = null;
 		int macroIterationOffset = 0;
 		boolean setIterationMacro = getParameterAsBoolean(PARAMETER_SET_MACRO);
@@ -97,66 +116,161 @@ public class LoopOperator extends OperatorChain {
 			macroIterationOffset = getParameterAsInt(PARAMETER_MACRO_START_VALUE);
 		}
 		this.currentIteration = 0;
-		
+
 		ArrayList<RemoteJob> jobList = new ArrayList<RemoteJob>();
-		HashMap<Integer,String> dataKeys = new HashMap<Integer, String>();
-		
-//		Iterator<PortPair> inputPortIterator = inputPortPairExtender.getManagedPairs().iterator();
-		Integer portIndex=0;
-//		while (inputPortIterator.hasNext()){
-//			PortPair portPair = inputPortIterator.next();
-//			if (portPair.getInputPort().isConnected()){
-//				IOObject io = portPair.getInputPort().getAnyDataOrNull();
-//				if (io!=null){
-//					String key = Helper.masterOperator.storeData(null, io);
-//					dataKeys.put(key, value)
+		HashMap<Integer, String> dataKeys = new HashMap<Integer, String>();
+
+		ArrayList<IOObject> inputData = new ArrayList<>();
+		for (int i = 0; i < inputExtender.getManagedPairs().size() - 1; i++) {
+			IOObject set = (IOObject) inputExtender.getManagedPairs().get(i)
+					.getOutputPort().getAnyDataOrNull();
+			if (set != null) {
+				inputData.add(set);
+			} else {
+
+			}
+		}
+		Integer a = 1;
+		for (IOObject io : inputData) {
+
+			String key = Helper.masterOperator.storeData(null, io);
+			dataKeys.put(a, key);
+			a++;
+		}
+		Helper.out("Keys size" + dataKeys.size());
+		// Iterator<PortPair> inputPortIterator =
+		// inputPortPairExtender.getManagedPairs().iterator();
+		Integer portIndex = 0;
+		// while (inputPortIterator.hasNext()){
+		// PortPair portPair = inputPortIterator.next();
+		// if (portPair.getInputPort().isConnected()){
+		// IOObject io = portPair.getInputPort().getAnyDataOrNull();
+		// if (io!=null){
+		// String key = Helper.masterOperator.storeData(null, io);
+		// dataKeys.put(key, value)
+		// }
+		// }
+		// }
+		ArrayList<RemoteJob> jobs = new ArrayList<RemoteJob>();
+		while (getIteration() < getParameterAsInt(PARAMETER_ITERATIONS)) {
+			if (setIterationMacro) {
+				String iterationString = Integer.toString(currentIteration
+						+ macroIterationOffset);
+				getProcess().getMacroHandler().addMacro(iterationMacroName,
+						iterationString);
+			}
+			getLogger().fine("Starting iteration " + (currentIteration + 1));
+
+			MacroHandler macroHandler = getRoot().getProcess()
+					.getMacroHandler();
+			Iterator<String> macrosIterator = macroHandler
+					.getDefinedMacroNames();
+			HashMap<String, String> macros = new HashMap<String, String>();
+			while (macrosIterator.hasNext()) {
+				String macroKey = macrosIterator.next();
+				macros.put(macroKey, macroHandler.getMacro(macroKey));
+			}
+			RemoteJob rj = new RemoteJob(xml, dataKeys, macros);
+			Helper.saveToFile("PROCESSLOOP_", xml);
+			jobs.add(rj);
+			// Helper.masterOperator.addJob(rj);
+			inApplyLoop();
+			getLogger()
+					.fine("Completed job creation " + (currentIteration + 1));
+			currentIteration++;
+		}
+		// currentIteration=0;
+		HashMap<Integer, ArrayList<IOObject>> toOutput = new HashMap<Integer, ArrayList<IOObject>>();
+		try {
+
+			Helper.out("jobs.size()=" + jobs.size());
+
+			List<Future<String>> resultKeys;
+			ExecutorService exec = Helper.masterOperator.getExecutorService();
+
+			resultKeys = exec.invokeAll(jobs);
+
+			
+			
+			if (resultKeys != null) {
+				Helper.out("resultKeys size: "+resultKeys.size());
+				if (resultKeys.size() > 0) {
+					Integer node = 0;
+					for (Future<String> nodeResult : resultKeys) {
+						String keys = nodeResult.get();
+						if (keys != null) {
+							String[] values = keys.split(";");
+							Integer portNo = 0;
+							Helper.out("Job result = ["+keys+"]");
+							for (String value : values) {
+								Helper.out("retrive: ["+((String)value)+"]");
+								IOObject io = Helper.masterOperator
+										.retriveResult(value);
+								
+								if (toOutput.get(portNo) == null) {
+									toOutput.put(portNo, new ArrayList<IOObject>());
+								}
+								if (io != null){
+								toOutput.get(portNo).add(io);
+								portNo++;
+								}else {
+									Helper.out("IO IS NULL!");
+								}
+							}
+						}
+					}
+				}
+			}
+//			try {
+//				
+//			} catch (Exception e) {
+//				for (int i : toOutput.keySet()) {
+//					IOObjectCollection<IOObject> ioc = new IOObjectCollection<IOObject>(
+//							toOutput.get(i));
+//					outputExtender.getManagedPairs().get(i + 1).getOutputPort()
+//							.deliver(ioc);
 //				}
+//				Helper.out("second option");
 //			}
-//		}
-//		while (getIteration() <= getParameterAsInt(PARAMETER_ITERATIONS)) {
-//			if (setIterationMacro) {
-//				String iterationString = Integer.toString(currentIteration
-//						+ macroIterationOffset);
-//				getProcess().getMacroHandler().addMacro(iterationMacroName,
-//						iterationString);
-//			}
-//			getLogger().fine("Starting iteration " + (currentIteration + 1));
-//			inputPortPairExtender.passDataThrough();
-//			
-////			getSubprocess(0).
-//			String proc = xmlTools.createProcessXmlFromSubprocess(this,"input", "output","LoopOperator");
-//			MacroHandler macroHandler = getRoot().getProcess().getMacroHandler();
-//			Iterator<String> macrosIterator = macroHandler.getDefinedMacroNames();
-//			HashMap<String, String> macros = new HashMap<String, String>();
-//			while (macrosIterator.hasNext()){
-//				String macroKey = macrosIterator.next();
-//				macros.put(macroKey, macroHandler.getMacro(macroKey));
-//			}
-//			RemoteJob rj = new RemoteJob(proc,dataKeys,macros);
-//			Helper.saveToFile("PROCESSLOOP_", proc);
-//			Helper.masterOperator.addJob(rj);	
-//			inApplyLoop();
-//			getLogger().fine("Completed job creation " + (currentIteration + 1));
-//			currentIteration++;
-//		}
-//		currentIteration=0;
-//		try {
-//			List<Future<String>> resultKeys = Helper.masterOperator.invokeAll();
-//			ArrayList<HashMap<Integer, IOObject>> result = Helper.masterOperator.processResponseToArray(resultKeys);
-//			Integer index = 0;
-//			while(!shouldStop(getSubprocess(0).getInnerSinks().createIOContainer(
-//					false))){
-//				Helper.masterOperator.toOutput(result.get(index), getSubprocess(0).getInnerSinks()); // TODO
-//				outExtender.collect();
-//				getLogger().fine("Completed job creation " + (currentIteration + 1));
-//				index++;
-//			}
-//		} catch (InterruptedException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
+
+			
+			// ArrayList<HashMap<Integer, IOObject>> result =
+			// Helper.masterOperator.processResponseToArray(resultKeys);
+			// Helper.masterOperator.toOutputArray(result, outputExtender);//
+			// resultKeys.size()
+			// List<IOObject> result =new ArrayList<IOObject>();
+			// try {
+			// Helper.out("Jobs to compute: " + jobs.size());
+			// ExecutorService exec = Helper.masterOperator
+			// .getExecutorService();
+			// // resultKeys = exec.invokeAll(jobs);
+			// returnValue =
+			// Helper.masterOperator.processResponse(exec.invokeAll(jobs));
+			//
+			// Helper.out("return " + returnValue.size());
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
+		Helper.out("toOutput:" + toOutput.size());
+		for (int i : toOutput.keySet()) {
+
+			IOObjectCollection<IOObject> ioc = new IOObjectCollection<IOObject>(
+					toOutput.get(i));
+			outputExtender.getManagedPairs().get(i).getOutputPort()
+					.deliver(ioc);
+
+		}
+		Helper.out("first option");
 		
+		Helper.out("Loop doWork(); finished");
+		}catch(Exception exc ){
+			throw new OperatorException("Something new", exc);
+		}
 	}
 
 	protected int getIteration() {

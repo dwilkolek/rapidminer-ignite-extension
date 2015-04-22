@@ -50,7 +50,7 @@ public abstract class AbstractJobManager<V> extends OperatorChain {
 	
 	abstract public String storeData(Object key, IOObject obj);
 	
-	abstract public void storeResult(Object key, IOObject obj);
+	abstract public String storeResult(Object key, IOObject obj);
 
 	abstract public IOObject retriveResult(Object key);
 	
@@ -76,5 +76,11 @@ public abstract class AbstractJobManager<V> extends OperatorChain {
 
 	abstract public void toOutput(
 			HashMap<Integer, HashMap<Integer, IOObject>> outputSet,
+			PortPairExtender outputExtender);
+
+	abstract public ArrayList<String> prepareDataForNoneSubprocess(
+			ArrayList<IOObject> data);
+
+	abstract public void toOutputArray(ArrayList<HashMap<Integer, IOObject>> outputSet,
 			PortPairExtender outputExtender);
 }

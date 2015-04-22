@@ -174,12 +174,21 @@ public class XMLTools {
 		Helper.saveToFile("before", xmlOriginal);
 		String xml;
 		StringBuilder builder = new StringBuilder();
-		xml = operator.cloneOperator(newOperatorName, true).getXML(false);
+		xml = operator.cloneOperator("Process", true).getXML(false);
+		xml = xml.replace("<process version=\"5.3.015\">", "<process version=\"5.3.015\"><context> <input/> <output/> <macros/> </context>");
+		xml = xml.replace("compatibility=\"1.0.000\"", "compatibility=\"5.3.015\"");
 		xml = xml.replace(	"class=\""+Config.extensionName+":"+operatorClass+"\"",
 							"class=\"process\"");
 		Helper.saveToFile("before1", xml);
 		xml = xml.replace("gin", "input").replace("gou", "result");
 		Helper.saveToFile("before1x", xml);
+		try {
+			Process proc = new Process(xml);
+			return proc.getRootOperator().getXML(false);
+		} catch (IOException | XMLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		return xml;
 	}
 

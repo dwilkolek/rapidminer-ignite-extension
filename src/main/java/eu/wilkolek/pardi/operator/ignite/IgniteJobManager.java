@@ -57,6 +57,9 @@ public class IgniteJobManager extends AbstractJobManager<IgniteRemoteJob> {
 
 	@Override
 	public void doWork() throws OperatorException {
+		
+		
+		
 		Helper.out("version: ["+Config.version+"]");
 		inputExtender.passDataThrough();
 		Helper.flushCache = getParameterAsBoolean(FLUSH_CACHE);
@@ -70,7 +73,7 @@ public class IgniteJobManager extends AbstractJobManager<IgniteRemoteJob> {
 			IgniteJobManagerHelper.ignite.close();
 			IgniteJobManagerHelper.ignite = null;
 			Helper.out("Ignite stop");
-			throw new OperatorException("Something gone wrong");
+			throw new OperatorException("Something gone wrong",e);
 		} finally {
 			if (IgniteJobManagerHelper.ignite != null) {
 				IgniteCache<String, IOObject> cache =IgniteJobManagerHelper.ignite
@@ -160,23 +163,15 @@ public class IgniteJobManager extends AbstractJobManager<IgniteRemoteJob> {
 	@Override
 	public String storeData(Object key, IOObject obj) {
 		asureInstanceIsReady();
-		String k;
-		if (key==null){
-			k = IgniteJobManagerHelper.generateDataKey("d", "it");
-		}else{
-			k = (String)key;
-		}
-		IgniteJobManagerHelper.DATACache.put(k, obj);
-		return k;
+		return IgniteJobManagerHelper.storeData(key, obj);
 	}
-	
-	
 	@Override
-	public void storeResult(Object key, IOObject obj) {
+	public String storeResult(Object key, IOObject obj) {
 		asureInstanceIsReady();
-		String k = (String)key;
-		IgniteJobManagerHelper.ignite.jcache(IgniteJobManagerHelper.RESULT).put(k, obj);
+		return IgniteJobManagerHelper.storeResult(key, obj);
 	}
+	
+	
 
 	@Override
 	public IOObject retriveData(Object key) {
@@ -308,6 +303,31 @@ public class IgniteJobManager extends AbstractJobManager<IgniteRemoteJob> {
 		
 	}
 	@Override
+	public void toOutputArray(
+			ArrayList<HashMap<Integer, IOObject>> outputSet,
+			PortPairExtender outputExtender) {
+		Iterator<PortPair> iterator = outputExtender.getManagedPairs()
+				.iterator();
+		Helper.out("managed pairs size: "
+				+ outputExtender.getManagedPairs().size());
+		int portNo = 0;
+		while (iterator.hasNext()) {
+			portNo++;
+
+			OutputPort outputPort = iterator.next().getOutputPort();
+
+			if (outputPort.isConnected() && outputSet.get(portNo) != null) {
+				ArrayList<IOObject> iOObjectList = new ArrayList<IOObject>(
+						outputSet.get(portNo).values());
+				IOObjectCollection<IOObject> ioc = new IOObjectCollection<IOObject>(
+						iOObjectList);
+				outputPort.deliver(ioc);
+			}
+
+		}
+		
+	}
+	@Override
 	public void toOutput(
 			HashMap<Integer, IOObject> outputSet,
 			CollectingPortPairExtender outExtender) {
@@ -331,8 +351,16 @@ public class IgniteJobManager extends AbstractJobManager<IgniteRemoteJob> {
 	public List<Future<String>> invokeAll() throws InterruptedException {
 		return IgniteJobManagerHelper.ignite.executorService(IgniteJobManagerHelper.ignite.cluster().forRemotes()).invokeAll(jobList);
 	}
-
-	
+	@Override
+	public ArrayList<String> prepareDataForNoneSubprocess(
+			ArrayList<IOObject> data) {
+		ArrayList<String> keySet = new ArrayList<String>();
+		for (IOObject io : data) {
+			String key = Helper.masterOperator.storeData(null, io);
+			keySet.add(key);
+		}
+		return keySet;
+	}
 
 
 		

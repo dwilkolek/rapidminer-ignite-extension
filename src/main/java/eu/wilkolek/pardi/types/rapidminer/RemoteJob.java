@@ -2,26 +2,32 @@ package eu.wilkolek.pardi.types.rapidminer;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.resources.IgniteInstanceResource;
 
+import com.rapidminer.Process;
 import com.rapidminer.RapidMiner;
 import com.rapidminer.operator.IOContainer;
 import com.rapidminer.operator.IOObject;
+import com.rapidminer.operator.ports.InputPort;
+import com.rapidminer.operator.ports.InputPorts;
 import com.rapidminer.operator.ports.OutputPort;
+import com.rapidminer.operator.ports.Ports;
 
 import eu.wilkolek.pardi.util.Config;
 import eu.wilkolek.pardi.util.Helper;
 import eu.wilkolek.pardi.util.ignite.IgniteJobManagerHelper;
 
-public class RemoteJob implements Callable<String> {
+public class RemoteJob implements Callable<String>, Serializable {
 	HashMap<Integer, String> dataKeys = new HashMap<Integer, String>();
 	String xml;
 	HashMap<String, String> macros = new java.util.HashMap<String, String>();
@@ -63,11 +69,27 @@ public class RemoteJob implements Callable<String> {
 			fos.flush();
 			fos.close();
 			Helper.out("Starting Rapidminer");
-
+			
+			Helper.out("proc created");
 			RapidMiner.init();
-			com.rapidminer.Process proc = RapidMiner
-					.readProcessFile(processFile);
-
+			Helper.out("initialized");
+			com.rapidminer.Process proc = new Process();
+			try {
+				proc = RapidMiner.readProcessFile(processFile);
+			}catch(Exception e){
+				Helper.out("1111");
+				e.printStackTrace();
+				try{
+					com.rapidminer.Process procc = new com.rapidminer.Process(xml);
+					proc = procc;
+				}catch(Exception ex){
+					Helper.out("2222");
+					ex.printStackTrace();
+					throw new Exception("no idea");
+				}
+				
+			}
+			Helper.out("Read Process");
 			IOContainer input = new IOContainer();
 			ArrayList<IOObject> inputList = new ArrayList<IOObject>();
 			Helper.out("Job got: " + dataKeys.size());
@@ -77,26 +99,42 @@ public class RemoteJob implements Callable<String> {
 			}
 			input = new IOContainer(inputList);
 
-			for (String names : proc.getAllOperatorNames()) {
-				Helper.out("operator: " + names);
+			if (proc != null){
+				for (String names : proc.getAllOperatorNames()) {
+					Helper.out("operator: " + names);
+				}
 			}
-
+			Helper.out("-----------------------------");
+			
+			if (proc != null){
+				for (String names : proc.getAllOperatorNames()) {
+					Helper.out("operator: " + names);
+				}
+			}
 			Helper.out("input has " + input.asList().size() + " objects");
-
 			IOContainer iocontener = proc.run(input, 0, macros);
-
+			
+			if (iocontener==null){
+				throw new Exception("Empty return");
+			}
 			Integer outputNumber = 0;
 			Integer genKey = 0;
 			String resultString = "";
 			Integer portNumber = 0;
-			for (OutputPort outputPort : proc.getRootOperator()
-					.getOutputPorts().getAllPorts()) {
+			Helper.out("outputPorts connected: "+proc.getRootOperator().getOutputPorts().getAllPorts().size());
+			List<InputPort> ports = proc.getRootOperator().getSubprocess(0).getInnerSinks().getAllPorts();
+			for (InputPort port : ports) {
 				portNumber++;
-				if (outputPort.isConnected()) {
-					IOObject io = outputPort.getAnyDataOrNull();
+				
+				if (port.isConnected()) {
+					IOObject io = port.getAnyDataOrNull();
 					if (io != null) {
-						String cacheKeyForPort = IgniteJobManagerHelper.generateResultKey("r","_"+portNumber);
-						result.put(cacheKeyForPort, io);
+						String cacheKeyForPort = IgniteJobManagerHelper.storeResult(null,io);
+						if (resultString.isEmpty()){
+							resultString+=cacheKeyForPort;
+						} else {
+							resultString+=";"+cacheKeyForPort;
+						}
 					}
 				}
 			}

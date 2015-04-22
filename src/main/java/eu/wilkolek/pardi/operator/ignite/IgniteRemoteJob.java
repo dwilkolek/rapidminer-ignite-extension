@@ -83,7 +83,7 @@ public class IgniteRemoteJob implements Callable<Object>, Serializable {
 			RapidMiner.init();
 			com.rapidminer.Process proc = RapidMiner
 					.readProcessFile(processFile);
-
+			
 			IOContainer input = new IOContainer();
 			ArrayList<IOObject> inputList = new ArrayList<IOObject>();
 			Helper.out("Job got: " + cacheKeys.size());
