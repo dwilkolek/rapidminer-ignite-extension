@@ -140,6 +140,7 @@ public class RemoteJob implements Callable<String>, Serializable {
 			}
 
 			Helper.out("result: " + resultString);
+		
 			return resultString;
 		} catch (Exception e) {
 			e.printStackTrace();

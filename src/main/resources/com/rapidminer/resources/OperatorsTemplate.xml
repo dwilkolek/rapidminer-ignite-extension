@@ -43,7 +43,7 @@
 				</operator>
 				<operator>
 					<key>Select Subprocess</key>
-					<class>eu.wilkolek.pardi.operator.ignite.SelectSubprocessOperator</class>
+					<class>eu.wilkolek.pardi.operator.rapidminer.SelectSubprocessOperator</class>
 					<replaces>TextInformationExtraction</replaces>
 				</operator>	
 			</group>

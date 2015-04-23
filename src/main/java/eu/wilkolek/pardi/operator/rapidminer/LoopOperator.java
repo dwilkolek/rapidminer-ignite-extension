@@ -25,6 +25,7 @@ import com.rapidminer.operator.ProcessRootOperator;
 import com.rapidminer.operator.ValueDouble;
 import com.rapidminer.operator.meta.IteratingOperatorChain;
 import com.rapidminer.operator.ports.CollectingPortPairExtender;
+import com.rapidminer.operator.ports.OutputPort;
 import com.rapidminer.operator.ports.PortPairExtender;
 import com.rapidminer.operator.ports.PortPairExtender.PortPair;
 import com.rapidminer.operator.ports.metadata.SubprocessTransformRule;
@@ -52,10 +53,10 @@ public class LoopOperator extends OperatorChain {
 	public static final String PARAMETER_MACRO_NAME = "macro_name";
 	public static final String PARAMETER_MACRO_START_VALUE = "macro_start_value";
 
-	protected PortPairExtender inputExtender = new PortPairExtender("gin",
+	protected PortPairExtender inputExtender = new PortPairExtender("input",
 			getInputPorts(), getSubprocess(0).getInnerSources());
 
-	protected PortPairExtender outputExtender = new PortPairExtender("gou",
+	protected PortPairExtender outputExtender = new PortPairExtender("result",
 			getSubprocess(0).getInnerSinks(), getOutputPorts());
 
 	private int currentIteration = 0;
@@ -94,9 +95,6 @@ public class LoopOperator extends OperatorChain {
 	@Override
 	public void doWork() throws OperatorException {
 		try{
-		OperatorDescription desc = this.getProcess().getRootOperator()
-				.getOperatorDescription();
-
 		clearAllInnerSinks();
 		inputExtender.passDataThrough();
 
@@ -261,9 +259,9 @@ public class LoopOperator extends OperatorChain {
 
 			IOObjectCollection<IOObject> ioc = new IOObjectCollection<IOObject>(
 					toOutput.get(i));
-			outputExtender.getManagedPairs().get(i).getOutputPort()
-					.deliver(ioc);
-
+			OutputPort o = outputExtender.getManagedPairs().get(i).getOutputPort();
+				Helper.out("Output Name: "+o.getName());
+				o.deliver(ioc);
 		}
 		Helper.out("first option");
 		
