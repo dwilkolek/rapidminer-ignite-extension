@@ -27,10 +27,12 @@ import com.rapidminer.parameter.ParameterTypeBoolean;
 import com.rapidminer.parameter.ParameterTypeString;
 
 import eu.wilkolek.pardi.types.rapidminer.IOString;
+import eu.wilkolek.pardi.util.BeanHandler;
 import eu.wilkolek.pardi.util.Config;
 import eu.wilkolek.pardi.util.PluginClassLoader;
 import eu.wilkolek.pardi.util.Helper;
 import eu.wilkolek.pardi.util.XMLTools;
+import eu.wilkolek.pardi.util.ignite.IgniteJobManagerHelper;
 
 public class Job extends OperatorChain {
 
@@ -47,7 +49,8 @@ public class Job extends OperatorChain {
 	ArrayList<ArrayList<String>> keySetForElement;
 	ArrayList<String> keySetForNone;
 	HashSet<Object> keysToRemoveCache = new HashSet<Object>();
-
+	IgniteJobManagerHelper helper = (IgniteJobManagerHelper)BeanHandler.getInstance().getBeans("ignite");
+	
 	private int id = -1;
 
 	Boolean perNode;
@@ -82,9 +85,10 @@ public class Job extends OperatorChain {
 
 	@Override
 	public void doWork() throws OperatorException{
+		helper = (IgniteJobManagerHelper)BeanHandler.getInstance().getBeans("ignite");
 		iteration++;
 		Helper.out("Job.doWork()");
-		Helper.masterOperator.asureInstanceIsReady();
+		helper.asureInstanceIsReady();
 
 		perNode = getParameterAsBoolean(PER_NODE);
 		perSubprocess = getParameterAsBoolean(PER_SUBPROCESS);
@@ -107,11 +111,11 @@ public class Job extends OperatorChain {
 		HashMap<Integer, HashMap<Integer, IOObject>> outputSet = compute(
 				procesXML, true);
 
-		Helper.masterOperator.toOutput(outputSet, outputExtender);
+		helper.toOutput(outputSet, outputExtender);
 
-			Helper.masterOperator.removeAllResults();
+			helper.removeAllResults();
 			if (!persistentData) {
-				Helper.masterOperator.removeAllDataByKeys(keysToRemoveCache);
+				helper.removeAllDataByKeys(keysToRemoveCache);
 			}
 		
 	}
@@ -128,7 +132,7 @@ public class Job extends OperatorChain {
 			for (IOObject ione : ion.getObjects()) {
 				String key = id + "_" + iteration + "_" + keyInput + "_"
 						+ keyElement;
-				Helper.masterOperator.storeData(key, ione);
+				helper.storeData(key, ione);
 				elementList.add(key);
 				keysToRemoveCache.add(key);
 				keyElement += 1;
@@ -156,7 +160,7 @@ public class Job extends OperatorChain {
 				for (IOObject iose : ios.getObjects()) {
 					String key = id + "_" + iteration + "_" + keyInput + "_"
 							+ keyNode + "_" + keySubprocess;
-					Helper.masterOperator.storeData(key, iose);
+					helper.storeData(key, iose);
 					keysToRemoveCache.add(key);
 					subprocessList.add(key);
 					keySubprocess++;
@@ -179,7 +183,7 @@ public class Job extends OperatorChain {
 		Integer key = 0;
 		for (IOObject io : data) {
 			String k = (id + "_" + iteration + "_" + key).toString();
-			Helper.masterOperator.storeData(k, io);
+			helper.storeData(k, io);
 			keysToRemoveCache.add(k);
 			keySet.add(k);
 			key++;
@@ -288,7 +292,7 @@ public class Job extends OperatorChain {
 							.getSource(), p, keySetForNone, id, iteration, macros, xmlTools.getOpNameForJob(process.getSource())));
 				}
 			} else {
-				for (int p = 0; p < Helper.masterOperator.nodeCount(); p++) {
+				for (int p = 0; p < helper.nodeCount(); p++) {
 					jobs.add(new IgniteRemoteJob(process.getSource(), p,
 							keySetForNone, id, iteration, macros,xmlTools.getOpNameForJob(process.getSource())));
 				}
@@ -299,10 +303,10 @@ public class Job extends OperatorChain {
 		// List<IOObject> result =new ArrayList<IOObject>();
 		try {
 			Helper.out("Jobs to compute: " + jobs.size());
-				ExecutorService exec = Helper.masterOperator
+				ExecutorService exec = helper
 						.getExecutorService();
 //				resultKeys = exec.invokeAll(jobs);
-				returnValue = Helper.masterOperator.processResponse(exec.invokeAll(jobs));
+				returnValue = helper.processResponse(exec.invokeAll(jobs));
 			
 			Helper.out("return " + returnValue.size());
 		

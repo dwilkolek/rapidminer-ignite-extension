@@ -27,8 +27,11 @@ import com.rapidminer.parameter.ParameterType;
 import com.rapidminer.parameter.ParameterTypeInt;
 
 import eu.wilkolek.pardi.types.rapidminer.RemoteJob;
+import eu.wilkolek.pardi.util.AbstractJobManagerHelper;
+import eu.wilkolek.pardi.util.BeanHandler;
 import eu.wilkolek.pardi.util.Helper;
 import eu.wilkolek.pardi.util.XMLTools;
+import eu.wilkolek.pardi.util.ignite.IgniteJobManagerHelper;
 
 public class SelectSubprocessOperator extends OperatorChain {
 
@@ -47,34 +50,37 @@ public class SelectSubprocessOperator extends OperatorChain {
 					getSubprocess(0).getInnerSinks(),
 					getSubprocess(1).getInnerSinks() });
 
+	AbstractJobManagerHelper helper = BeanHandler.getInstance()
+			.getCurrentBean();
+
 	public SelectSubprocessOperator(OperatorDescription description) {
 		super(description, "Selection 1", "Selection 2");
 		inputExtender.start();
 		outputExtender.start();
 		getTransformer().addRule(inputExtender.makePassThroughRule());
-//		getTransformer().addRule(new MDTransformationRule() {
-//			@Override
-//			public void transformMD() {
-//				int operatorIndex = -1;
-//				try {
-//					operatorIndex = getParameterAsInt(PARAMETER_SELECT_WHICH) - 1;
-//					for (int i = 0; i < getNumberOfSubprocesses(); i++) {
-//						if (i != operatorIndex) { // skip selected and transform
-//													// last, so it overrides
-//													// everything
-//							getSubprocess(i).transformMetaData();
-//						}
-//					}
-//					if ((operatorIndex >= 0)
-//							&& (operatorIndex < getNumberOfSubprocesses())) {
-//						getSubprocess(operatorIndex).transformMetaData();
-//					}
-//				} catch (Exception e) {
-//
-//				}
-//
-//			}
-//		});
+		// getTransformer().addRule(new MDTransformationRule() {
+		// @Override
+		// public void transformMD() {
+		// int operatorIndex = -1;
+		// try {
+		// operatorIndex = getParameterAsInt(PARAMETER_SELECT_WHICH) - 1;
+		// for (int i = 0; i < getNumberOfSubprocesses(); i++) {
+		// if (i != operatorIndex) { // skip selected and transform
+		// // last, so it overrides
+		// // everything
+		// getSubprocess(i).transformMetaData();
+		// }
+		// }
+		// if ((operatorIndex >= 0)
+		// && (operatorIndex < getNumberOfSubprocesses())) {
+		// getSubprocess(operatorIndex).transformMetaData();
+		// }
+		// } catch (Exception e) {
+		//
+		// }
+		//
+		// }
+		// });
 		getTransformer().addRule(outputExtender.makePassThroughRule());
 	}
 
@@ -115,15 +121,7 @@ public class SelectSubprocessOperator extends OperatorChain {
 	@Override
 	public void doWork() throws OperatorException {
 		try {
-//			int operatorIndex = getParameterAsInt(PARAMETER_SELECT_WHICH);
-//			if ((operatorIndex < 1)
-//					|| (operatorIndex > getNumberOfSubprocesses())) {
-//				throw new UserError(
-//						this,
-//						207,
-//						new Object[] { operatorIndex, PARAMETER_SELECT_WHICH,
-//								"must be between 1 and the number of inner operators." });
-//			}
+			helper = BeanHandler.getInstance().getCurrentBean();
 			inputExtender.passDataThrough();
 			ArrayList<RemoteJob> jobList = new ArrayList<RemoteJob>();
 			HashMap<Integer, String> dataKeys = new HashMap<Integer, String>();
@@ -139,15 +137,12 @@ public class SelectSubprocessOperator extends OperatorChain {
 			}
 			Integer a = 1;
 			for (IOObject io : inputData) {
-
-				String key = Helper.masterOperator.storeData(null, io);
+				String key = helper.storeData(null, io);
 				dataKeys.put(a, key);
 				a++;
 			}
 			XMLTools xmlTools = new XMLTools();
-			String xml = xmlTools.processXML(this, this.getXML(false), "Dupa",
-					"Select Subprocess");
-
+			
 			MacroHandler macroHandler = getRoot().getProcess()
 					.getMacroHandler();
 			Iterator<String> macrosIterator = macroHandler
@@ -157,9 +152,26 @@ public class SelectSubprocessOperator extends OperatorChain {
 				String macroKey = macrosIterator.next();
 				macros.put(macroKey, macroHandler.getMacro(macroKey));
 			}
-
+			
 			for (int i = 0; i < getSubprocesses().size(); i++) {
-				RemoteJob job = new RemoteJob(xml, dataKeys, macros);
+//				com.rapidminer.Process procForSubprocess = new com.rapidminer.Process(
+//						new String(xml));
+//				Helper.saveToFile("subprocess_pe_"+i, procForSubprocess
+//						.getRootOperator().getXML(false));
+//				for (int subNo = 0; subNo < procForSubprocess.getRootOperator()
+//						.getSubprocesses().size(); subNo++) {
+//					if (i != subNo) {
+//						Helper.out("removing subprocess "+subNo+" for "+i+" job");
+//						procForSubprocess.getRootOperator().removeSubprocess(
+//								subNo);
+//					}
+//				}
+//				Helper.saveToFile("subprocess_"+i, procForSubprocess
+//						.getRootOperator().getXML(false));
+				String xml = xmlTools.processXML(this, this.getXML(false), "Dupa",
+						"Select Subprocess",i);
+				RemoteJob job = helper.createJob(xml, dataKeys, macros);
+
 				jobList.add(job);
 			}
 
@@ -168,7 +180,7 @@ public class SelectSubprocessOperator extends OperatorChain {
 			Helper.out("jobs.size()=" + jobList.size());
 
 			List<Future<String>> resultKeys;
-			ExecutorService exec = Helper.masterOperator.getExecutorService();
+			ExecutorService exec = helper.getExecutorService();
 
 			resultKeys = exec.invokeAll(jobList);
 
@@ -185,8 +197,7 @@ public class SelectSubprocessOperator extends OperatorChain {
 							for (String value : values) {
 								Helper.out("retrive: [" + ((String) value)
 										+ "]");
-								IOObject io = Helper.masterOperator
-										.retriveResult(value);
+								IOObject io = helper.retriveResult(value);
 
 								if (toOutput.get(portNo) == null) {
 									toOutput.put(portNo,

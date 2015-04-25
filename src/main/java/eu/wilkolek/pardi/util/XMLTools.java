@@ -20,6 +20,7 @@ import com.rapidminer.Process;
 import com.rapidminer.io.process.XMLExporter;
 import com.rapidminer.operator.ExecutionUnit;
 import com.rapidminer.operator.Operator;
+import com.rapidminer.operator.OperatorChain;
 import com.rapidminer.operator.OperatorException;
 import com.rapidminer.operator.ports.PortException;
 import com.rapidminer.tools.XMLException;
@@ -165,15 +166,31 @@ public class XMLTools {
 		Helper.out("returning xml from TASK");
 		return builder.toString();
 	}
-
 	public String processXML(
 			final Operator operator, 
 			final String xmlOriginal,
 			final String newOperatorName,
-			final String operatorClass) {
+			final String operatorClass){
+		return processXML(operator, xmlOriginal, newOperatorName, operatorClass,null);
+	}
+	public String processXML(
+			final Operator operator, 
+			final String xmlOriginal,
+			final String newOperatorName,
+			final String operatorClass,
+			final Integer subprocess) {
 		Helper.saveToFile("before", xmlOriginal);
 		String xml;
-		xml = operator.cloneOperator("Process", true).getXML(false);
+		Operator op = operator.cloneOperator("Process", true);
+		if (subprocess !=null){
+			OperatorChain opc =(OperatorChain)op;
+			for (int subNo = 0; subNo < opc.getSubprocesses().size(); subNo++){
+				if (subNo != subprocess){
+					opc.removeSubprocess(subNo);
+				}
+			}
+		}
+		xml = op.getXML(false);
 		xml = xml.replaceFirst("<process version=\"5.3.015\">", "<process version=\"5.3.015\"><context> <input/> <output/> <macros/> </context>");
 		xml = xml.replace("compatibility=\"1.0.000\"", "compatibility=\"5.3.015\"");
 		xml = xml.replaceFirst(	"class=\""+Config.extensionName+":"+operatorClass+"\"",
@@ -187,6 +204,11 @@ public class XMLTools {
 //			xml_connections += line;
 //		}
 		Helper.saveToFile("before1x", xml);
+		
+		
+		
+		
+		
 		try {
 			Process proc = new Process(xml);
 			return proc.getRootOperator().getXML(false);
@@ -335,5 +357,7 @@ public class XMLTools {
 		
 		return "";
 	}
+
+	
 
 }

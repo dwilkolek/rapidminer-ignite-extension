@@ -3,6 +3,7 @@ package eu.wilkolek.pardi.types.rapidminer;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.Serializable;
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -13,6 +14,7 @@ import java.util.concurrent.Callable;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.resources.IgniteInstanceResource;
+import org.springframework.cglib.transform.AbstractClassLoader;
 
 import com.rapidminer.Process;
 import com.rapidminer.RapidMiner;
@@ -23,33 +25,58 @@ import com.rapidminer.operator.ports.InputPorts;
 import com.rapidminer.operator.ports.OutputPort;
 import com.rapidminer.operator.ports.Ports;
 
+import eu.wilkolek.pardi.util.AbstractJobManagerHelper;
 import eu.wilkolek.pardi.util.Config;
 import eu.wilkolek.pardi.util.Helper;
 import eu.wilkolek.pardi.util.ignite.IgniteJobManagerHelper;
 
 public class RemoteJob implements Callable<String>, Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 4553633900386828233L;
 	HashMap<Integer, String> dataKeys = new HashMap<Integer, String>();
 	String xml;
 	HashMap<String, String> macros = new java.util.HashMap<String, String>();
-
+	AbstractJobManagerHelper helper;
+	
+	@IgniteInstanceResource
+	Ignite ignite;
+	
+	private String masterNodeId;
+	
 	public RemoteJob(String xml, HashMap<Integer, String> dataKeys,
-			HashMap<String, String> macros) {
+			HashMap<String, String> macros, String helperName, String masterNodeId) {
 		this.xml = xml;
 		this.dataKeys = dataKeys;
 		this.macros = macros;
+		this.masterNodeId = masterNodeId;
+		try {
+			this.helper = (AbstractJobManagerHelper)Class.forName(helperName).newInstance();
+			
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InstantiationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 	}
 
-	@IgniteInstanceResource
-	Ignite ignite;
 
 	@Override
 	public String call() throws Exception {
 		try {
-			IgniteJobManagerHelper.prepareIgniteJobManagerForRemotes(ignite);
+			helper.prepareForRemoteJob(ignite,masterNodeId);
+//			IgniteJobManagerHelper.prepareIgniteJobManagerForRemotes();
 			
 			Long generatedKey = Math.round(Math.random()*100000);
 			String callId=generatedKey.toString();
-			String jobCacheKey = ignite.cluster().localNode().id().toString();
+//			String jobCacheKey = ignite.cluster().localNode().id().toString();
 			System.out.println("I'm computing! with version: ["
 					+ Config.version + "]");
 			Date date = new Date();
@@ -60,8 +87,8 @@ public class RemoteJob implements Callable<String>, Serializable {
 			Helper.out("rapidminer.home: "
 					+ System.getProperty("rapidminer.home"));
 
-			IgniteCache<String, IOObject> cache = ignite.jcache("cache");
-			IgniteCache<String, IOObject> result = ignite.jcache("result");
+//			IgniteCache<String, IOObject> cache = ignite.jcache("cache");
+//			IgniteCache<String, IOObject> result = ignite.jcache("result");
 
 			File processFile = new File(filename);
 			FileOutputStream fos = new FileOutputStream(processFile);
@@ -95,7 +122,7 @@ public class RemoteJob implements Callable<String>, Serializable {
 			Helper.out("Job got: " + dataKeys.size());
 			for (Integer key : dataKeys.keySet()) {
 				String cacheKey = dataKeys.get(key);
-				inputList.add(cache.get(cacheKey));
+				inputList.add(helper.retriveData(cacheKey));
 			}
 			input = new IOContainer(inputList);
 
@@ -129,7 +156,7 @@ public class RemoteJob implements Callable<String>, Serializable {
 				if (port.isConnected()) {
 					IOObject io = port.getAnyDataOrNull();
 					if (io != null) {
-						String cacheKeyForPort = IgniteJobManagerHelper.storeResult(null,io);
+						String cacheKeyForPort = helper.storeResult(null,io);
 						if (resultString.isEmpty()){
 							resultString+=cacheKeyForPort;
 						} else {

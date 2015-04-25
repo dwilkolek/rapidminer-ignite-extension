@@ -79,8 +79,9 @@ public class IgniteRemoteJob implements Callable<Object>, Serializable {
 			fos.flush();
 			fos.close();
 			Helper.out("Starting Rapidminer");
-
-			RapidMiner.init();
+			if (!RapidMiner.isInitialized()){
+				RapidMiner.init();
+			}
 			com.rapidminer.Process proc = RapidMiner
 					.readProcessFile(processFile);
 			

@@ -12,8 +12,10 @@ import eu.wilkolek.pardi.types.rapidminer.AbstractJobManager;
 
 public class Helper {
 	
-	public static AbstractJobManager masterOperator = null;
-
+//	public static AbstractJobManager masterOperator = null;
+	public static AbstractJobManagerHelper jobManagerHelper = null;
+	
+	
 	public static Boolean lastPerSubprocess = false;
 	public static Boolean lastPerNode = false;
 	public static boolean persistentData = false;
