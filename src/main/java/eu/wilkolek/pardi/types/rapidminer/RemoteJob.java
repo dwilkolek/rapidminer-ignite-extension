@@ -73,7 +73,6 @@ public class RemoteJob implements Callable<String>, Serializable {
 		try {
 			helper.prepareForRemoteJob(ignite,masterNodeId);
 //			IgniteJobManagerHelper.prepareIgniteJobManagerForRemotes();
-			
 			Long generatedKey = Math.round(Math.random()*100000);
 			String callId=generatedKey.toString();
 //			String jobCacheKey = ignite.cluster().localNode().id().toString();
@@ -82,7 +81,7 @@ public class RemoteJob implements Callable<String>, Serializable {
 			Date date = new Date();
 			String filename = "tmp_" + Math.round(Math.random() * 100) + "_"
 					+ date.getTime() + ".xml";
-			Helper.out("FILE : " + filename);
+//			Helper.out("FILE : " + filename);
 
 			Helper.out("rapidminer.home: "
 					+ System.getProperty("rapidminer.home"));
@@ -95,27 +94,29 @@ public class RemoteJob implements Callable<String>, Serializable {
 			fos.write(xml.getBytes());
 			fos.flush();
 			fos.close();
-			Helper.out("Starting Rapidminer");
+//			Helper.out("Starting Rapidminer");
 			
-			Helper.out("proc created");
-			RapidMiner.init();
-			Helper.out("initialized");
+//			Helper.out("proc created");
+			if (!RapidMiner.isInitialized()){
+				RapidMiner.init();
+			}
+//			Helper.out("initialized");
 			com.rapidminer.Process proc = new Process();
-			try {
-				proc = RapidMiner.readProcessFile(processFile);
-			}catch(Exception e){
-				Helper.out("1111");
-				e.printStackTrace();
-				try{
+//			try {
+//				proc = RapidMiner.readProcessFile(processFile);
+//			}catch(Exception e){
+//				Helper.out("1111");
+//				e.printStackTrace();
+//				try{
 					com.rapidminer.Process procc = new com.rapidminer.Process(xml);
 					proc = procc;
-				}catch(Exception ex){
-					Helper.out("2222");
-					ex.printStackTrace();
-					throw new Exception("no idea");
-				}
-				
-			}
+//				}catch(Exception ex){
+//					Helper.out("2222");
+//					ex.printStackTrace();
+//					throw new Exception("no idea");
+//				}
+//				
+//			}
 			Helper.out("Read Process");
 			IOContainer input = new IOContainer();
 			ArrayList<IOObject> inputList = new ArrayList<IOObject>();

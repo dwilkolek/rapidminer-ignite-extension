@@ -1,17 +1,17 @@
 cls
-rem call gradlew.bat clean
+call gradlew.bat clean
 call gradlew.bat
 
 
 echo Delete in ignite
-del "..\rapidminer-node\ignite-fabric\libs\ext\rapidminer-ignite-extension-1.0.0-all.jar"
+del "..\rapidminer-node\ignite\libs\ext\rapidminer-ignite-extension-1.0.0-all.jar"
 echo Delete in rapidminer
 del "..\rapidminer-node\rapidminer\lib\plugins\rapidminer-ignite-extension-1.0.0-all.jar"
 
 
 
 echo Copy to node ignite-fabric 
-copy "..\rapidminer\lib\plugins\rapidminer-ignite-extension-1.0.0-all.jar" "../rapidminer-node/ignite-fabric/libs/ext/" /Y
+copy "..\rapidminer\lib\plugins\rapidminer-ignite-extension-1.0.0-all.jar" "../rapidminer-node/ignite/libs/ext/" /Y
 
 echo Copy to node rapidminer 
 copy "..\rapidminer\lib\plugins\rapidminer-ignite-extension-1.0.0-all.jar" "../rapidminer-node/rapidminer/lib/plugins/" /Y

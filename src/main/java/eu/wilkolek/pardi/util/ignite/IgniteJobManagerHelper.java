@@ -48,7 +48,7 @@ public class IgniteJobManagerHelper extends AbstractJobManagerHelper {
 	public String RESULT = "result";
 
 	private File cfgFile = new File(
-			"D:/gitlab/rapidminer-node/ignite-fabric/config/default-config.xml");
+			"D:/gitlab/rapidminer-node/ignite/config/default-config.xml");
 
 	public File getCfgFile() {
 		return cfgFile;
@@ -65,8 +65,8 @@ public class IgniteJobManagerHelper extends AbstractJobManagerHelper {
 	public void prepareIgniteJobManagerForRemotes(Ignite i) {
 		if (i != null) {
 			this.ignite = i;
-			this.DATACache = i.jcache(DATA);
-			this.RESULTCache = i.jcache(RESULT);
+			this.DATACache = i.cache(DATA);
+			this.RESULTCache = i.cache(RESULT);
 		}
 	}
 
@@ -110,8 +110,8 @@ public class IgniteJobManagerHelper extends AbstractJobManagerHelper {
 
 	public void setIgnite(Ignite ignite) {
 		this.ignite = ignite;
-		igniteCacheResult = ignite.jcache(RESULT);
-		igniteCacheData = ignite.jcache(DATA);
+		igniteCacheResult = ignite.cache(RESULT);
+		igniteCacheData = ignite.cache(DATA);
 	}
 
 	@Override
@@ -129,55 +129,64 @@ public class IgniteJobManagerHelper extends AbstractJobManagerHelper {
 
 	@Override
 	public void asureInstanceIsReady() {
-		
+
 		if (this.ignite == null) {
 			if (this.loader == null) {
+
 				prepareClassLoader();
 			}
-			Helper.out("Ignite == null? --> "+(ignite == null));
-			try{
-				
-					this.ignite = Ignition.start(this.getCfgFile().getAbsolutePath());
-				
-			}catch(Exception e){
-					this.ignite = Ignition.ignite();
+			Helper.out("Ignite == null? --> " + (ignite == null));
+			try {
+
+				this.ignite = Ignition.start(this.getCfgFile()
+						.getAbsolutePath());
+
+			} catch (Exception e) {
+				this.ignite = Ignition.ignite();
 			}
-			
+
 			Helper.out("Ignite start");
 
-			this.DATACache = this.ignite.jcache(this.DATA);
-			this.RESULTCache = this.ignite.jcache(this.RESULT);
+			this.DATACache = this.ignite.cache(this.DATA);
+			this.RESULTCache = this.ignite.cache(this.RESULT);
 		}
 
 	}
 
 	public void prepareClassLoader() {
-		IgniteConfiguration cfg = new IgniteConfiguration();
-		this.loader = cfg.getClass().getClassLoader();
-		PluginClassLoader wcl = new PluginClassLoader(
-				RapidMiner.class.getClassLoader(), cfg.getClass()
-						.getClassLoader());
+		if (Thread.currentThread().getContextClassLoader() instanceof PluginClassLoader) {
+			this.loader = Thread.currentThread().getContextClassLoader();
+		} else {
+			IgniteConfiguration cfg = new IgniteConfiguration();
+			this.loader = cfg.getClass().getClassLoader();
+			PluginClassLoader wcl = new PluginClassLoader(
+					RapidMiner.class.getClassLoader(), cfg.getClass()
+							.getClassLoader());
 
-		try {
-			this.loader = wcl;
-			this.loader.loadClass(IgniteConfiguration.class.getCanonicalName());
-			Thread.currentThread().setContextClassLoader(this.loader);
-			Thread.currentThread().getContextClassLoader()
-					.loadClass(IgniteConfiguration.class.getCanonicalName());
-		} catch (ClassNotFoundException e2) {
-			Helper.out("loader don't load");
+			try {
+				this.loader = wcl;
+				this.loader.loadClass(IgniteConfiguration.class
+						.getCanonicalName());
+				Thread.currentThread().setContextClassLoader(this.loader);
+				Thread.currentThread()
+						.getContextClassLoader()
+						.loadClass(IgniteConfiguration.class.getCanonicalName());
+			} catch (ClassNotFoundException e2) {
+				Helper.out("loader don't load");
+			}
 		}
 	}
 
 	public ExecutorService getExecutorService() {
 		ArrayList<ClusterNode> clusterNodes = new ArrayList<ClusterNode>();
 		UUID master = UUID.fromString(uuid);
-		for (ClusterNode cn : this.ignite.cluster().forRemotes().nodes()){
-			if (master!=cn.id()){
+		for (ClusterNode cn : this.ignite.cluster().forRemotes().nodes()) {
+			if (master != cn.id()) {
 				clusterNodes.add(cn);
 			}
 		}
-		return ignite.executorService(this.ignite.cluster().forRemotes().forNodes(clusterNodes));
+		return ignite.executorService(this.ignite.cluster().forRemotes()
+				.forNodes(clusterNodes));
 	}
 
 	public int nodeCout() {
@@ -187,13 +196,13 @@ public class IgniteJobManagerHelper extends AbstractJobManagerHelper {
 	@Override
 	public void prepareForRemoteJob(Object instance, String masterNodeId) {
 		this.uuid = masterNodeId;
-		
+
 		Ignite itest = Ignition.ignite();
-		Helper.out("itest : "+(itest == null));
+		Helper.out("itest : " + (itest == null));
 		workingRemotly = true;
-		ignite = (Ignite)instance;
-		DATACache = ignite.jcache(DATA);
-		RESULTCache = ignite.jcache(RESULT);
+		ignite = (Ignite) instance;
+		DATACache = ignite.cache(DATA);
+		RESULTCache = ignite.cache(RESULT);
 	}
 
 	@Override
@@ -241,7 +250,7 @@ public class IgniteJobManagerHelper extends AbstractJobManagerHelper {
 
 		while (resultKeysIterator.hasNext()) {
 			try {
-				String code = (String)resultKeysIterator.next().get();
+				String code = (String) resultKeysIterator.next().get();
 				if (!code.isEmpty()) {
 					String[] cacheKeys = code.split(";");
 					for (String cacheKey : cacheKeys) {
@@ -262,10 +271,14 @@ public class IgniteJobManagerHelper extends AbstractJobManagerHelper {
 
 			} catch (InterruptedException e) {
 				e.printStackTrace();
-				throw new OperatorException("IgniteJobManagerHelper.processResponse()[InterruptedException]",e);
+				throw new OperatorException(
+						"IgniteJobManagerHelper.processResponse()[InterruptedException]",
+						e);
 			} catch (ExecutionException e) {
 				e.printStackTrace();
-				throw new OperatorException("IgniteJobManagerHelper.processResponse()[ExecutionException]",e);
+				throw new OperatorException(
+						"IgniteJobManagerHelper.processResponse()[ExecutionException]",
+						e);
 			}
 		}
 		return outputSets;
@@ -279,7 +292,7 @@ public class IgniteJobManagerHelper extends AbstractJobManagerHelper {
 		Integer i = 0;
 		while (resultKeysIterator.hasNext()) {
 			try {
-				String code = (String)resultKeysIterator.next().get();
+				String code = (String) resultKeysIterator.next().get();
 				if (!code.isEmpty()) {
 					String[] cacheKeys = code.split(";");
 					for (String cacheKey : cacheKeys) {
@@ -297,10 +310,14 @@ public class IgniteJobManagerHelper extends AbstractJobManagerHelper {
 				i++;
 			} catch (InterruptedException e) {
 				e.printStackTrace();
-				throw new OperatorException("IgniteJobManagerHelper.processResponse()[InterruptedException]",e);
+				throw new OperatorException(
+						"IgniteJobManagerHelper.processResponse()[InterruptedException]",
+						e);
 			} catch (ExecutionException e) {
 				e.printStackTrace();
-				throw new OperatorException("IgniteJobManagerHelper.processResponse()[ExecutionException]",e);
+				throw new OperatorException(
+						"IgniteJobManagerHelper.processResponse()[ExecutionException]",
+						e);
 			}
 		}
 		return outputSets;
@@ -413,26 +430,27 @@ public class IgniteJobManagerHelper extends AbstractJobManagerHelper {
 	public void removeAllData() {
 		DATACache.removeAll();
 	}
-	
+
 	public String uuid = "";
-	
+
 	@Override
 	public RemoteJob createJob(String xml, HashMap<Integer, String> dataKeys,
 			HashMap<String, String> macros) {
-		return new RemoteJob(xml, dataKeys, macros, IgniteJobManagerHelper.class.getName(), uuid);
+		Helper.out("UUID : " + uuid);
+		return new RemoteJob(xml, dataKeys, macros,
+				IgniteJobManagerHelper.class.getName(), uuid);
 	}
 
 	@Override
 	public void prepareForRemoteJob() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void prepareForRemoteJob(Object instance) {
 		// TODO Auto-generated method stub
-		
+
 	}
-	
 
 }

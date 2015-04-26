@@ -325,7 +325,7 @@ public class Job extends OperatorChain {
 		Iterator<Operator> it = getSubprocess(0).getOperators().iterator();
 		while (it.hasNext()) {
 			Operator op = it.next();
-			if (JobSubprocess.class.getSimpleName().equals(
+			if (Config.JOBSubprocess.equals(
 					op.getOperatorClassName())) {
 				OperatorChain chain = (OperatorChain) op;
 				Helper.out("Subprocess size()"

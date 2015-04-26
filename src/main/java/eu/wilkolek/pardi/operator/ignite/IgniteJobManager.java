@@ -46,7 +46,7 @@ public class IgniteJobManager extends AbstractJobManager<IgniteRemoteJob> {
 	IgniteJobManagerHelper helper = new IgniteJobManagerHelper();
 	Boolean needInit = true;
 	String INIT_REMOTE_NODES = "Initiate remote nodes";
-	
+
 	/** This constructor allows subclasses to change the subprocess' name. */
 	protected IgniteJobManager(OperatorDescription description,
 			String subProcessName) {
@@ -62,25 +62,29 @@ public class IgniteJobManager extends AbstractJobManager<IgniteRemoteJob> {
 
 	@Override
 	public void doWork() throws OperatorException {
-		helper = (IgniteJobManagerHelper)BeanHandler.getInstance().getBeans("ignite");
+		helper = (IgniteJobManagerHelper) BeanHandler.getInstance().getBeans(
+				"ignite");
 		if (helper == null) {
 			helper = new IgniteJobManagerHelper();
 			helper.asureInstanceIsReady();
 			BeanHandler.getInstance().addBeans("ignite", helper);
 		}
 		BeanHandler.getInstance().setCurrentBean("ignite");
-		
+
 		UUID uuid = helper.ignite.cluster().localNode().id();
 		helper.uuid = uuid.toString();
-		
-		if (getParameterAsBoolean(INIT_REMOTE_NODES) && needInit){
-			
-			RemoteJob job = new RemoteJob(xmlInitRemote,new HashMap<Integer, String>(), new HashMap<String, String>(), IgniteJobManagerHelper.class.getName(), uuid.toString());
+
+		if (getParameterAsBoolean(INIT_REMOTE_NODES) && needInit) {
+
+			RemoteJob job = new RemoteJob(xmlInitRemote,
+					new HashMap<Integer, String>(),
+					new HashMap<String, String>(),
+					IgniteJobManagerHelper.class.getName(), uuid.toString());
 			ArrayList<RemoteJob> jobList = new ArrayList<RemoteJob>();
-			for (int jn = 0; jn < helper.nodeCount()-1; jn++){
+			for (int jn = 0; jn < helper.nodeCount(); jn++) {
 				jobList.add(job);
 			}
-			Helper.out("Init Remote Jobs : "+jobList.size());
+			Helper.out("Init Remote Jobs : " + jobList.size());
 			try {
 				helper.getExecutorService().invokeAll(jobList);
 			} catch (InterruptedException e) {
@@ -88,7 +92,7 @@ public class IgniteJobManager extends AbstractJobManager<IgniteRemoteJob> {
 			}
 			needInit = false;
 		}
-		
+
 		Helper.out("version: [" + Config.version + "]");
 		inputExtender.passDataThrough();
 		Helper.flushCache = getParameterAsBoolean(FLUSH_CACHE);
@@ -105,8 +109,10 @@ public class IgniteJobManager extends AbstractJobManager<IgniteRemoteJob> {
 			Helper.out("Ignite stop");
 			throw new OperatorException("Something gone wrong", e);
 		} finally {
-			if (helper.ignite != null) {
-				helper.removeAllResults();
+			if (helper != null) {
+				if (helper.ignite != null) {
+					helper.removeAllResults();
+				}
 			}
 		}
 	}
@@ -228,8 +234,7 @@ public class IgniteJobManager extends AbstractJobManager<IgniteRemoteJob> {
 	//
 	//
 	//
-	
-	
+
 	private String xmlInitRemote = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>"
 			+ "<process version=\"5.3.015\">"
 			+ "<context>"

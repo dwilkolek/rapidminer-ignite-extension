@@ -70,8 +70,8 @@ public class IgniteRemoteJob implements Callable<Object>, Serializable {
 			Helper.out("rapidminer.home: "
 					+ System.getProperty("rapidminer.home"));
 
-			IgniteCache<String, IOObject> cache = grid.jcache("cache");
-			IgniteCache<String, IOObject> result = grid.jcache("result");
+			IgniteCache<String, IOObject> cache = grid.cache("cache");
+			IgniteCache<String, IOObject> result = grid.cache("result");
 
 			File processFile = new File(filename);
 			FileOutputStream fos = new FileOutputStream(processFile);
