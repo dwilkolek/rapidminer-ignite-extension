@@ -1,4 +1,4 @@
-package eu.wilkolek.pardi.operator.ignite;
+package eu.wilkolek.pardi.ignite;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -6,14 +6,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-
-import org.apache.ignite.Ignite;
-import org.apache.ignite.IgniteCache;
-import org.apache.ignite.cluster.ClusterNode;
-import org.apache.ignite.resources.IgniteInstanceResource;
 
 import com.rapidminer.operator.IOObject;
 import com.rapidminer.operator.IOObjectCollection;
@@ -26,13 +19,11 @@ import com.rapidminer.parameter.ParameterType;
 import com.rapidminer.parameter.ParameterTypeBoolean;
 import com.rapidminer.parameter.ParameterTypeString;
 
-import eu.wilkolek.pardi.types.rapidminer.IOString;
+import eu.wilkolek.pardi.types.IOString;
 import eu.wilkolek.pardi.util.BeanHandler;
 import eu.wilkolek.pardi.util.Config;
-import eu.wilkolek.pardi.util.PluginClassLoader;
 import eu.wilkolek.pardi.util.Helper;
 import eu.wilkolek.pardi.util.XMLTools;
-import eu.wilkolek.pardi.util.ignite.IgniteJobManagerHelper;
 
 public class Job extends OperatorChain {
 
@@ -87,7 +78,7 @@ public class Job extends OperatorChain {
 	public void doWork() throws OperatorException{
 		helper = (IgniteJobManagerHelper)BeanHandler.getInstance().getBeans("ignite");
 		iteration++;
-		Helper.out("Job.doWork()");
+//		Helper.out("Job.doWork()");
 		helper.asureInstanceIsReady();
 
 		perNode = getParameterAsBoolean(PER_NODE);
@@ -103,14 +94,16 @@ public class Job extends OperatorChain {
 		String xml = this.getXML(false);
 
 		IOString procesXML = new IOString();
-		procesXML.setSource(xmlTools.processXML(this, xml, this.getProcess()
+		String procesInXml = xmlTools.processXML(this, xml, this.getProcess()
 				.getRootOperator().getXML(false), inputExtender
-				.getManagedPairs().size() - 1));
+				.getManagedPairs().size() - 1);
+//		Helper.out("procesInXml : "+procesInXml.length());
+		procesXML.setSource(procesInXml);
 
-		
+//		Helper.out("passing:"+(procesXML.getSource() != null));
 		HashMap<Integer, HashMap<Integer, IOObject>> outputSet = compute(
 				procesXML, true);
-
+		
 		helper.toOutput(outputSet, outputExtender);
 
 			helper.removeAllResults();
@@ -120,6 +113,7 @@ public class Job extends OperatorChain {
 		
 	}
 
+	@SuppressWarnings("unchecked")
 	private ArrayList<ArrayList<String>> prepareDataForNode(
 			ArrayList<IOObject> data) {
 		ArrayList<ArrayList<String>> keySet = new ArrayList<ArrayList<String>>();
@@ -144,6 +138,7 @@ public class Job extends OperatorChain {
 		return keySet;
 	}
 
+	@SuppressWarnings("unchecked")
 	private ArrayList<ArrayList<ArrayList<String>>> prepareDataForAll(
 			ArrayList<IOObject> data) {
 		ArrayList<ArrayList<ArrayList<String>>> keySet = new ArrayList<ArrayList<ArrayList<String>>>();
@@ -171,9 +166,9 @@ public class Job extends OperatorChain {
 			keySet.add(nodeList);
 			keyInput += 100;
 		}
-		Helper.out("inputs :" + keySet.size());
-		Helper.out("nodes :" + keySet.get(0).size());
-		Helper.out("subprocesses :" + keySet.get(0).get(0).size());
+//		Helper.out("inputs :" + keySet.size());
+//		Helper.out("nodes :" + keySet.get(0).size());
+//		Helper.out("subprocesses :" + keySet.get(0).get(0).size());
 		return keySet;
 	}
 
@@ -193,6 +188,14 @@ public class Job extends OperatorChain {
 
 	private HashMap<Integer, HashMap<Integer, IOObject>> compute(
 			final IOString procesXML, Boolean loadingType) throws OperatorException{
+//		try{
+//			Helper.out("compute:procesXML:null?"+(procesXML != null));
+//		
+//		Helper.out("compute:procesXML:Sourcenull?"+(procesXML.getSource() != null));
+//		Helper.out("compute:procesXML:empty?"+(procesXML.getSource().isEmpty()));
+//		} catch (Exception e){
+//			e.printStackTrace();
+//		}
 		IOString process = procesXML;
 		HashMap<Integer, HashMap<Integer, IOObject>> returnValue = new HashMap<Integer, HashMap<Integer, IOObject>>();
 		HashMap<String, String> macros = new HashMap<String, String>();
@@ -203,7 +206,7 @@ public class Job extends OperatorChain {
 			macros.put(key, macro);
 		}
 		
-		Helper.out("compute()");
+//		Helper.out("compute()");
 		
 		
 
@@ -271,12 +274,12 @@ public class Job extends OperatorChain {
 				}
 			}
 			int rm = 0;
-			Helper.out("Keyset size: " + keyMap.keySet().size());
+//			Helper.out("Keyset size: " + keyMap.keySet().size());
 			for (String key : keyMap.keySet()) {
-				Helper.out("key #" + key);
+//				Helper.out("key #" + key);
 				String values[] = key.split("_");
 				Integer j = Integer.parseInt(values[1]); // subprocess
-				Integer i = Integer.parseInt(values[0]); // node
+			//	Integer i = Integer.parseInt(values[0]); // node
 				jobs.add(new IgniteRemoteJob(xmlTools.selectSubproces(
 						(j) % keySetForAll.get(0).get(0).size() + 1, process)
 						.getSource(), rm, keyMap.get(key), id, iteration, macros, xmlTools.getOpNameForJob(process.getSource())));
@@ -299,16 +302,13 @@ public class Job extends OperatorChain {
 			}
 		}
 
-		List<Future<String>> resultKeys;
-		// List<IOObject> result =new ArrayList<IOObject>();
 		try {
 			Helper.out("Jobs to compute: " + jobs.size());
 				ExecutorService exec = helper
 						.getExecutorService();
-//				resultKeys = exec.invokeAll(jobs);
 				returnValue = helper.processResponse(exec.invokeAll(jobs));
 			
-			Helper.out("return " + returnValue.size());
+//			Helper.out("return " + returnValue.size());
 		
 		}catch (InterruptedException e){
 			e.printStackTrace();
@@ -317,7 +317,7 @@ public class Job extends OperatorChain {
 			throw new OperatorException("Computing thrown Exception",e);
 		}
 		
-		Helper.out("COMPUTE: " + returnValue.size() + " exampleSets");
+//		Helper.out("COMPUTE: " + returnValue.size() + " exampleSets");
 		return returnValue;
 	}
 
@@ -328,8 +328,8 @@ public class Job extends OperatorChain {
 			if (Config.JOBSubprocess.equals(
 					op.getOperatorClassName())) {
 				OperatorChain chain = (OperatorChain) op;
-				Helper.out("Subprocess size()"
-						+ chain.getSubprocesses().size());
+//				Helper.out("Subprocess size()"
+//						+ chain.getSubprocesses().size());
 				return chain.getSubprocesses().size();
 			}
 		}

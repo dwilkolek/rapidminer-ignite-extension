@@ -2,6 +2,8 @@ package eu.wilkolek.pardi.util;
 
 import java.util.HashMap;
 
+import eu.wilkolek.pardi.types.AbstractJobManagerHelper;
+
 public final class BeanHandler {
 	HashMap<String, AbstractJobManagerHelper> beans = new HashMap<String, AbstractJobManagerHelper>();
 	private String currentBean;

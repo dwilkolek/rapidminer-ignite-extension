@@ -1,4 +1,4 @@
-package eu.wilkolek.pardi.types.rapidminer;
+package eu.wilkolek.pardi.types;
 
 import java.util.ArrayList;
 import java.util.HashMap;

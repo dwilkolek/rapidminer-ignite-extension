@@ -1,34 +1,15 @@
-package eu.wilkolek.pardi.operator.ignite;
+package eu.wilkolek.pardi.ignite;
 
 import java.util.List;
 
-import com.rapidminer.operator.IOObject;
 import com.rapidminer.operator.OperatorChain;
 import com.rapidminer.operator.OperatorDescription;
 import com.rapidminer.operator.OperatorException;
-import com.rapidminer.operator.ports.InputPort;
-import com.rapidminer.operator.ports.OutputPort;
 import com.rapidminer.operator.ports.PortPairExtender;
 import com.rapidminer.operator.ports.metadata.SubprocessTransformRule;
 import com.rapidminer.parameter.ParameterType;
 import com.rapidminer.parameter.ParameterTypeBoolean;
-import com.rapidminer.parameter.ParameterTypeString;
 
-
-/*
- * the same data for each node
- * each data 
- * or each 
- */
-
-
-
-
-
-
-
-
-import eu.wilkolek.pardi.util.Config;
 import eu.wilkolek.pardi.util.Helper;
 
 public class JobEvaluator extends OperatorChain {
@@ -73,7 +54,7 @@ public class JobEvaluator extends OperatorChain {
 	public void doWork() throws OperatorException {
 		
 
-		Helper.out("delivered "+inputExtender.getManagedPairs().size()+"managed inputs");
+//		Helper.out("delivered "+inputExtender.getManagedPairs().size()+"managed inputs");
 //		for (int key = 0; key < inputExtender.getManagedPairs().size()-1; key++) { 
 //			IOObject ioobj = inputExtender.getManagedPairs().get(key).getOutputPort().getData(IOObject.class);
 //		}

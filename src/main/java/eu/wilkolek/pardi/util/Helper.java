@@ -8,7 +8,8 @@ import java.util.Date;
 import com.rapidminer.operator.IOObject;
 import com.rapidminer.operator.IOObjectCollection;
 
-import eu.wilkolek.pardi.types.rapidminer.AbstractJobManager;
+import eu.wilkolek.pardi.types.AbstractJobManager;
+import eu.wilkolek.pardi.types.AbstractJobManagerHelper;
 
 public class Helper {
 

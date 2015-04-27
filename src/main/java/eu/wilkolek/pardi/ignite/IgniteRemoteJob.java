@@ -1,29 +1,22 @@
-package eu.wilkolek.pardi.operator.ignite;
+package eu.wilkolek.pardi.ignite;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.concurrent.Callable;
 
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.resources.IgniteInstanceResource;
 
-import java.util.*;
-import java.util.concurrent.Callable;
-
-import javax.cache.Cache.Entry;
-
 import com.rapidminer.RapidMiner;
-import com.rapidminer.example.ExampleSet;
 import com.rapidminer.operator.IOContainer;
 import com.rapidminer.operator.IOObject;
-import com.rapidminer.operator.ProcessRootOperator;
-import com.rapidminer.operator.learner.igss.Result;
 import com.rapidminer.operator.ports.OutputPort;
-import com.rapidminer.parameter.ParameterTypeString;
-import com.rapidminer.tools.ParameterService;
 
-import eu.wilkolek.pardi.types.rapidminer.IOString;
 import eu.wilkolek.pardi.util.Config;
 import eu.wilkolek.pardi.util.Helper;
 
@@ -107,19 +100,18 @@ public class IgniteRemoteJob implements Callable<Object>, Serializable {
 							.getNumberOfPorts());
 			Helper.out("input has " + input.asList().size() + " objects");
 
-			IOContainer iocontener = proc.run(input,0, macros);
+			proc.run(input,0, macros);
 
 			Integer outputNumber = 0;
-			Integer genKey = 0;
 			String resultString = "";
 			for (OutputPort outputPort4Process : proc
 					.getOperator(opName).getOutputPorts()
 					.getAllPorts()) {
 				IOObject object = outputPort4Process.getAnyDataOrNull();
-				Helper.out("" + "Name : "
-						+ outputPort4Process.getShortName() + " is connected="
-						+ outputPort4Process.isConnected() + " and it's "
-						+ (object != null ? "data" : "null"));
+//				Helper.out("" + "Name : "
+//						+ outputPort4Process.getShortName() + " is connected="
+//						+ outputPort4Process.isConnected() + " and it's "
+//						+ (object != null ? "data" : "null"));
 				if ("gou".equals(outputPort4Process.getShortName())) {
 					outputNumber++;
 					if (outputPort4Process.isConnected() && object != null) {
@@ -132,7 +124,7 @@ public class IgniteRemoteJob implements Callable<Object>, Serializable {
 
 			}
 
-			Helper.out("result: " + resultString);
+//			Helper.out("result: " + resultString);
 			return resultString;
 		} catch (Exception e) {
 			e.printStackTrace();

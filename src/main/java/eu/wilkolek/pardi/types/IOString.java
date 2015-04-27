@@ -1,4 +1,4 @@
-package eu.wilkolek.pardi.types.rapidminer;
+package eu.wilkolek.pardi.types;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -14,7 +14,9 @@ import com.rapidminer.tools.LoggingHandler;
 
 public class IOString implements IOObject {
 	
-	String data = "";
+	
+	private static final long serialVersionUID = 7590387509709790549L;
+	private String data = "";
 	
 	public IOString() {
 		// TODO Auto-generated constructor stub
@@ -23,29 +25,21 @@ public class IOString implements IOObject {
 	public IOString(String dane) {
 		this.data = dane;
 	}
-	
-	@Override
-	public void appendOperatorToHistory(Operator arg0, OutputPort arg1) {
-		// TODO Auto-generated method stub
 
+	@Override
+	public void setSource(String sourceName) {
+		data = sourceName;
 	}
 
 	@Override
-	public IOObject copy() {
-		// TODO Auto-generated method stub
-		return this;
+	public String getSource() {
+		return data;
 	}
 
 	@Override
-	public Annotations getAnnotations() {
+	public void appendOperatorToHistory(Operator operator, OutputPort port) {
 		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public LoggingHandler getLog() {
-		// TODO Auto-generated method stub
-		return null;
+		
 	}
 
 	@Override
@@ -55,25 +49,35 @@ public class IOString implements IOObject {
 	}
 
 	@Override
-	public String getSource() {
+	public IOObject copy() {
 		// TODO Auto-generated method stub
-		return data;
+		return null;
 	}
 
 	@Override
-	public void setLoggingHandler(LoggingHandler arg0) {
+	public void write(OutputStream out) throws IOException {
 		// TODO Auto-generated method stub
-
+		
 	}
 
 	@Override
-	public void setSource(String dane) {
-		this.data = dane;
+	public LoggingHandler getLog() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	@Override
-	public void write(OutputStream daneStream) throws IOException {
-		this.data = daneStream.toString();
+	public void setLoggingHandler(LoggingHandler loggingHandler) {
+		// TODO Auto-generated method stub
+		
 	}
+
+	@Override
+	public Annotations getAnnotations() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	
 
 }

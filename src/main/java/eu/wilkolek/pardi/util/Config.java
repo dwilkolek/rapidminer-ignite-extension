@@ -20,8 +20,8 @@ import com.rapidminer.operator.ports.OutputPort;
 import com.rapidminer.operator.ports.PortPairExtender;
 import com.rapidminer.operator.ports.PortPairExtender.PortPair;
 
-import eu.wilkolek.pardi.operator.ignite.IgniteRemoteJob;
-import eu.wilkolek.pardi.types.rapidminer.AbstractJobManager;
+import eu.wilkolek.pardi.ignite.IgniteRemoteJob;
+import eu.wilkolek.pardi.types.AbstractJobManager;
 
 public class Config {
 
@@ -32,6 +32,6 @@ public class Config {
 	public static String JOBSubprocess = "Job Subprocess";
 	public static String JOBSubprocessEvaluator = "Job Subprocess Evaluator";
 	public static String extensionName = "pardi_extension";
-	public static String ExecutionUnitContainer = "ExecutionUnitContainer";
-	public static String version = "1.2.3";
+
+	public static String version = "1.2.4";
 }

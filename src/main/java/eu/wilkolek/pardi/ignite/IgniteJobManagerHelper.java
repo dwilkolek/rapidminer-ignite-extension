@@ -1,4 +1,4 @@
-package eu.wilkolek.pardi.util.ignite;
+package eu.wilkolek.pardi.ignite;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -11,15 +11,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
-import javax.management.OperationsException;
-
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.Ignition;
 import org.apache.ignite.cluster.ClusterNode;
 import org.apache.ignite.configuration.IgniteConfiguration;
-import org.apache.ignite.resources.IgniteInstanceResource;
-import org.w3c.dom.views.AbstractView;
 
 import com.rapidminer.RapidMiner;
 import com.rapidminer.operator.IOObject;
@@ -32,12 +28,16 @@ import com.rapidminer.operator.ports.OutputPort;
 import com.rapidminer.operator.ports.PortPairExtender;
 import com.rapidminer.operator.ports.PortPairExtender.PortPair;
 
-import eu.wilkolek.pardi.types.rapidminer.RemoteJob;
-import eu.wilkolek.pardi.util.AbstractJobManagerHelper;
+import eu.wilkolek.pardi.types.AbstractJobManagerHelper;
+import eu.wilkolek.pardi.types.RemoteJob;
 import eu.wilkolek.pardi.util.Helper;
 import eu.wilkolek.pardi.util.PluginClassLoader;
 
 public class IgniteJobManagerHelper extends AbstractJobManagerHelper {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1454955049129358662L;
 	public IgniteCache<String, IOObject> DATACache;
 	public IgniteCache<String, IOObject> RESULTCache;
 
@@ -79,7 +79,7 @@ public class IgniteJobManagerHelper extends AbstractJobManagerHelper {
 			k = (String) key;
 		}
 		this.DATACache.put(k, obj);
-		Helper.out("Stored in cache CACHE");
+//		Helper.out("Stored in cache CACHE");
 		return k;
 	}
 
@@ -92,7 +92,7 @@ public class IgniteJobManagerHelper extends AbstractJobManagerHelper {
 		return key;
 	}
 
-	public String generateDataKey(String a, String z) {
+	private String generateDataKey(String a, String z) {
 		String key = proposeKey(a, z);
 
 		while (DATACache.containsKey(key)) {
@@ -123,7 +123,7 @@ public class IgniteJobManagerHelper extends AbstractJobManagerHelper {
 			k = (String) key;
 		}
 		this.RESULTCache.put(k, obj);
-		Helper.out("Stored in cache RESULT");
+//		Helper.out("Stored in cache RESULT");
 		return k;
 	}
 
@@ -135,7 +135,7 @@ public class IgniteJobManagerHelper extends AbstractJobManagerHelper {
 
 				prepareClassLoader();
 			}
-			Helper.out("Ignite == null? --> " + (ignite == null));
+//			Helper.out("Ignite == null? --> " + (ignite == null));
 			try {
 
 				this.ignite = Ignition.start(this.getCfgFile()
@@ -153,7 +153,7 @@ public class IgniteJobManagerHelper extends AbstractJobManagerHelper {
 
 	}
 
-	public void prepareClassLoader() {
+	private void prepareClassLoader() {
 		if (Thread.currentThread().getContextClassLoader() instanceof PluginClassLoader) {
 			this.loader = Thread.currentThread().getContextClassLoader();
 		} else {
@@ -177,13 +177,18 @@ public class IgniteJobManagerHelper extends AbstractJobManagerHelper {
 		}
 	}
 
+	@Override
 	public ExecutorService getExecutorService() {
 		ArrayList<ClusterNode> clusterNodes = new ArrayList<ClusterNode>();
 		UUID master = UUID.fromString(uuid);
 		for (ClusterNode cn : this.ignite.cluster().forRemotes().nodes()) {
-			if (master != cn.id()) {
+//			Helper.out("if ( "+ uuid + "==" + cn.id());
+			if (!cn.id().toString().equals(uuid)) {
 				clusterNodes.add(cn);
 			}
+//			else{
+//				Helper.out("Master node execluded");
+//			}
 		}
 		return ignite.executorService(this.ignite.cluster().forRemotes()
 				.forNodes(clusterNodes));
@@ -196,13 +201,14 @@ public class IgniteJobManagerHelper extends AbstractJobManagerHelper {
 	@Override
 	public void prepareForRemoteJob(Object instance, String masterNodeId) {
 		this.uuid = masterNodeId;
-
-		Ignite itest = Ignition.ignite();
-		Helper.out("itest : " + (itest == null));
+//		Helper.out("remote Job has uuid : "+masterNodeId);
+//		Ignite itest = Ignition.ignite();
+//		Helper.out("itest : " + (itest == null));
 		workingRemotly = true;
 		ignite = (Ignite) instance;
 		DATACache = ignite.cache(DATA);
 		RESULTCache = ignite.cache(RESULT);
+		uuid = masterNodeId;
 	}
 
 	@Override
@@ -240,8 +246,8 @@ public class IgniteJobManagerHelper extends AbstractJobManagerHelper {
 	public IOObject retriveData(Object key) {
 		return DATACache.get((String) key);
 	}
-
-	@Override
+//
+//	@Override
 	public HashMap<Integer, HashMap<Integer, IOObject>> processResponse(
 			List<Future<Object>> resultKeys) throws OperatorException {
 
@@ -283,96 +289,96 @@ public class IgniteJobManagerHelper extends AbstractJobManagerHelper {
 		}
 		return outputSets;
 	}
-
-	@Override
-	public ArrayList<HashMap<Integer, IOObject>> processResponseToArray(
-			List<Future<Object>> resultKeys) throws OperatorException {
-		Iterator<Future<Object>> resultKeysIterator = resultKeys.iterator();
-		ArrayList<HashMap<Integer, IOObject>> outputSets = new ArrayList<HashMap<Integer, IOObject>>();
-		Integer i = 0;
-		while (resultKeysIterator.hasNext()) {
-			try {
-				String code = (String) resultKeysIterator.next().get();
-				if (!code.isEmpty()) {
-					String[] cacheKeys = code.split(";");
-					for (String cacheKey : cacheKeys) {
-						// 0 - JobID, 1- iteration , 2 - outputPortNumber
-						String[] values = cacheKey.split("_");
-						Integer outputPortNumber = Integer.parseInt(values[2]);
-
-						if (outputSets.get(i) == null) {
-							outputSets.add(new HashMap<Integer, IOObject>());
-						}
-						outputSets.get(i).put(outputPortNumber,
-								retriveResult(cacheKey));
-					}
-				}
-				i++;
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-				throw new OperatorException(
-						"IgniteJobManagerHelper.processResponse()[InterruptedException]",
-						e);
-			} catch (ExecutionException e) {
-				e.printStackTrace();
-				throw new OperatorException(
-						"IgniteJobManagerHelper.processResponse()[ExecutionException]",
-						e);
-			}
-		}
-		return outputSets;
-	}
-
-	@Override
-	public void toOutput(ArrayList<String> outputSet, InputPorts outputExtender) {
-		Iterator<InputPort> iterator = outputExtender.getAllPorts().iterator();
-
-		int portNo = 0;
-		while (iterator.hasNext()) {
-			portNo++;
-
-			InputPort inputPort = iterator.next();
-
-			if (inputPort.isConnected()) {
-				inputPort.receive(retriveData(outputSet.get(portNo)));
-			}
-
-		}
-	}
-
-	@Override
-	public void toOutput(HashMap<Integer, IOObject> outputSet,
-			CollectingPortPairExtender outputExtender) {
-		Iterator<PortPair> iterator = outputExtender.getManagedPairs()
-				.iterator();
-		Helper.out("managed pairs size: "
-				+ outputExtender.getManagedPairs().size());
-		int portNo = 0;
-		while (iterator.hasNext()) {
-			portNo++;
-
-			OutputPort outputPort = iterator.next().getOutputPort();
-
-			if (outputPort.isConnected() && outputSet.get(portNo) != null) {
-				outputPort.deliver(outputSet.get(portNo));
-			}
-
-		}
-	}
-
-	@Override
-	public List<Future<String>> invokeAll() throws InterruptedException {
-		return getExecutorService().invokeAll(jobList);
-	}
-
-	@Override
+//
+//	@Override
+//	public ArrayList<HashMap<Integer, IOObject>> processResponseToArray(
+//			List<Future<Object>> resultKeys) throws OperatorException {
+//		Iterator<Future<Object>> resultKeysIterator = resultKeys.iterator();
+//		ArrayList<HashMap<Integer, IOObject>> outputSets = new ArrayList<HashMap<Integer, IOObject>>();
+//		Integer i = 0;
+//		while (resultKeysIterator.hasNext()) {
+//			try {
+//				String code = (String) resultKeysIterator.next().get();
+//				if (!code.isEmpty()) {
+//					String[] cacheKeys = code.split(";");
+//					for (String cacheKey : cacheKeys) {
+//						// 0 - JobID, 1- iteration , 2 - outputPortNumber
+//						String[] values = cacheKey.split("_");
+//						Integer outputPortNumber = Integer.parseInt(values[2]);
+//
+//						if (outputSets.get(i) == null) {
+//							outputSets.add(new HashMap<Integer, IOObject>());
+//						}
+//						outputSets.get(i).put(outputPortNumber,
+//								retriveResult(cacheKey));
+//					}
+//				}
+//				i++;
+//			} catch (InterruptedException e) {
+//				e.printStackTrace();
+//				throw new OperatorException(
+//						"IgniteJobManagerHelper.processResponse()[InterruptedException]",
+//						e);
+//			} catch (ExecutionException e) {
+//				e.printStackTrace();
+//				throw new OperatorException(
+//						"IgniteJobManagerHelper.processResponse()[ExecutionException]",
+//						e);
+//			}
+//		}
+//		return outputSets;
+//	}
+//
+//	@Override
+//	public void toOutput(ArrayList<String> outputSet, InputPorts outputExtender) {
+//		Iterator<InputPort> iterator = outputExtender.getAllPorts().iterator();
+//
+//		int portNo = 0;
+//		while (iterator.hasNext()) {
+//			portNo++;
+//
+//			InputPort inputPort = iterator.next();
+//
+//			if (inputPort.isConnected()) {
+//				inputPort.receive(retriveData(outputSet.get(portNo)));
+//			}
+//
+//		}
+//	}
+//
+//	@Override
+//	public void toOutput(HashMap<Integer, IOObject> outputSet,
+//			CollectingPortPairExtender outputExtender) {
+//		Iterator<PortPair> iterator = outputExtender.getManagedPairs()
+//				.iterator();
+//		Helper.out("managed pairs size: "
+//				+ outputExtender.getManagedPairs().size());
+//		int portNo = 0;
+//		while (iterator.hasNext()) {
+//			portNo++;
+//
+//			OutputPort outputPort = iterator.next().getOutputPort();
+//
+//			if (outputPort.isConnected() && outputSet.get(portNo) != null) {
+//				outputPort.deliver(outputSet.get(portNo));
+//			}
+//
+//		}
+//	}
+//
+//	@Override
+//	public List<Future<String>> invokeAll() throws InterruptedException {
+//		return getExecutorService().invokeAll(jobList);
+//	}
+//
+//	@Override
 	public void toOutput(
 			HashMap<Integer, HashMap<Integer, IOObject>> outputSet,
 			PortPairExtender outputExtender) {
 		Iterator<PortPair> iterator = outputExtender.getManagedPairs()
 				.iterator();
-		Helper.out("managed pairs size: "
-				+ outputExtender.getManagedPairs().size());
+//		Helper.out("managed pairs size: "
+//				+ outputExtender.getManagedPairs().size());
 		int portNo = 0;
 		while (iterator.hasNext()) {
 			portNo++;
@@ -389,42 +395,42 @@ public class IgniteJobManagerHelper extends AbstractJobManagerHelper {
 
 		}
 	}
-
-	@Override
-	public ArrayList<String> prepareDataForNoneSubprocess(
-			ArrayList<IOObject> data) {
-		ArrayList<String> keySet = new ArrayList<String>();
-		for (IOObject io : data) {
-			String key = storeData(null, io);
-			keySet.add(key);
-		}
-		return keySet;
-	}
-
-	@Override
-	public void toOutputArray(ArrayList<HashMap<Integer, IOObject>> outputSet,
-			PortPairExtender outputExtender) {
-		Iterator<PortPair> iterator = outputExtender.getManagedPairs()
-				.iterator();
-		Helper.out("managed pairs size: "
-				+ outputExtender.getManagedPairs().size());
-		int portNo = 0;
-		while (iterator.hasNext()) {
-			portNo++;
-
-			OutputPort outputPort = iterator.next().getOutputPort();
-
-			if (outputPort.isConnected() && outputSet.get(portNo) != null) {
-				ArrayList<IOObject> iOObjectList = new ArrayList<IOObject>(
-						outputSet.get(portNo).values());
-				IOObjectCollection<IOObject> ioc = new IOObjectCollection<IOObject>(
-						iOObjectList);
-				outputPort.deliver(ioc);
-			}
-
-		}
-
-	}
+//
+//	@Override
+//	public ArrayList<String> prepareDataForNoneSubprocess(
+//			ArrayList<IOObject> data) {
+//		ArrayList<String> keySet = new ArrayList<String>();
+//		for (IOObject io : data) {
+//			String key = storeData(null, io);
+//			keySet.add(key);
+//		}
+//		return keySet;
+//	}
+//
+//	@Override
+//	public void toOutputArray(ArrayList<HashMap<Integer, IOObject>> outputSet,
+//			PortPairExtender outputExtender) {
+//		Iterator<PortPair> iterator = outputExtender.getManagedPairs()
+//				.iterator();
+//		Helper.out("managed pairs size: "
+//				+ outputExtender.getManagedPairs().size());
+//		int portNo = 0;
+//		while (iterator.hasNext()) {
+//			portNo++;
+//
+//			OutputPort outputPort = iterator.next().getOutputPort();
+//
+//			if (outputPort.isConnected() && outputSet.get(portNo) != null) {
+//				ArrayList<IOObject> iOObjectList = new ArrayList<IOObject>(
+//						outputSet.get(portNo).values());
+//				IOObjectCollection<IOObject> ioc = new IOObjectCollection<IOObject>(
+//						iOObjectList);
+//				outputPort.deliver(ioc);
+//			}
+//
+//		}
+//
+//	}
 
 	@Override
 	public void removeAllData() {
@@ -436,21 +442,57 @@ public class IgniteJobManagerHelper extends AbstractJobManagerHelper {
 	@Override
 	public RemoteJob createJob(String xml, HashMap<Integer, String> dataKeys,
 			HashMap<String, String> macros) {
-		Helper.out("UUID : " + uuid);
+//		Helper.out("UUID : " + uuid);
 		return new RemoteJob(xml, dataKeys, macros,
 				IgniteJobManagerHelper.class.getName(), uuid);
 	}
 
-	@Override
-	public void prepareForRemoteJob() {
+//	@Override
+//	public void prepareForRemoteJob() {
+//		// TODO Auto-generated method stub
+//
+//	}
+//
+//	@Override
+//	public void prepareForRemoteJob(Object instance) {
 		// TODO Auto-generated method stub
 
-	}
+//	}
 
 	@Override
-	public void prepareForRemoteJob(Object instance) {
-		// TODO Auto-generated method stub
+	public HashMap<Integer, ArrayList<IOObject>> resultKeysToOutput(
+			List<Future<String>> resultKeys) throws InterruptedException, ExecutionException {
+		HashMap<Integer, ArrayList<IOObject>> toOutput = new HashMap<Integer, ArrayList<IOObject>>();
+		if (resultKeys != null) {
+//			Helper.out("resultKeys size: " + resultKeys.size());
+			if (resultKeys.size() > 0) {
+				for (Future<String> nodeResult : resultKeys) {
+					String keys = nodeResult.get();
+					if (keys != null) {
+						String[] values = keys.split(";");
+						Integer portNo = 0;
+//						Helper.out("Job result = [" + keys + "]");
+						for (String value : values) {
+//							Helper.out("retrive: [" + ((String) value)
+//									+ "]");
+							IOObject io = retriveResult(value);
 
+							if (toOutput.get(portNo) == null) {
+								toOutput.put(portNo,
+										new ArrayList<IOObject>());
+							}
+							if (io != null) {
+								toOutput.get(portNo).add(io);
+								portNo++;
+							} else {
+//								Helper.out("IO IS NULL!");
+							}
+						}
+					}
+				}
+			}
+		}
+		return toOutput;
 	}
 
 }

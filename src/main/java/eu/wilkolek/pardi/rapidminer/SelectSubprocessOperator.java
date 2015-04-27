@@ -1,4 +1,4 @@
-package eu.wilkolek.pardi.operator.rapidminer;
+package eu.wilkolek.pardi.rapidminer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,12 +26,12 @@ import com.rapidminer.operator.ports.metadata.MDTransformationRule;
 import com.rapidminer.parameter.ParameterType;
 import com.rapidminer.parameter.ParameterTypeInt;
 
-import eu.wilkolek.pardi.types.rapidminer.RemoteJob;
-import eu.wilkolek.pardi.util.AbstractJobManagerHelper;
+import eu.wilkolek.pardi.ignite.IgniteJobManagerHelper;
+import eu.wilkolek.pardi.types.AbstractJobManagerHelper;
+import eu.wilkolek.pardi.types.RemoteJob;
 import eu.wilkolek.pardi.util.BeanHandler;
 import eu.wilkolek.pardi.util.Helper;
 import eu.wilkolek.pardi.util.XMLTools;
-import eu.wilkolek.pardi.util.ignite.IgniteJobManagerHelper;
 
 public class SelectSubprocessOperator extends OperatorChain {
 
@@ -58,29 +58,7 @@ public class SelectSubprocessOperator extends OperatorChain {
 		inputExtender.start();
 		outputExtender.start();
 		getTransformer().addRule(inputExtender.makePassThroughRule());
-		// getTransformer().addRule(new MDTransformationRule() {
-		// @Override
-		// public void transformMD() {
-		// int operatorIndex = -1;
-		// try {
-		// operatorIndex = getParameterAsInt(PARAMETER_SELECT_WHICH) - 1;
-		// for (int i = 0; i < getNumberOfSubprocesses(); i++) {
-		// if (i != operatorIndex) { // skip selected and transform
-		// // last, so it overrides
-		// // everything
-		// getSubprocess(i).transformMetaData();
-		// }
-		// }
-		// if ((operatorIndex >= 0)
-		// && (operatorIndex < getNumberOfSubprocesses())) {
-		// getSubprocess(operatorIndex).transformMetaData();
-		// }
-		// } catch (Exception e) {
-		//
-		// }
-		//
-		// }
-		// });
+		
 		getTransformer().addRule(outputExtender.makePassThroughRule());
 	}
 
@@ -145,30 +123,11 @@ public class SelectSubprocessOperator extends OperatorChain {
 			
 			MacroHandler macroHandler = getRoot().getProcess()
 					.getMacroHandler();
-			Iterator<String> macrosIterator = macroHandler
-					.getDefinedMacroNames();
-			HashMap<String, String> macros = new HashMap<String, String>();
-			while (macrosIterator.hasNext()) {
-				String macroKey = macrosIterator.next();
-				macros.put(macroKey, macroHandler.getMacro(macroKey));
-			}
+			HashMap<String, String> macros = helper.exportMacro(macroHandler);
 			
 			for (int i = 0; i < getSubprocesses().size(); i++) {
-//				com.rapidminer.Process procForSubprocess = new com.rapidminer.Process(
-//						new String(xml));
-//				Helper.saveToFile("subprocess_pe_"+i, procForSubprocess
-//						.getRootOperator().getXML(false));
-//				for (int subNo = 0; subNo < procForSubprocess.getRootOperator()
-//						.getSubprocesses().size(); subNo++) {
-//					if (i != subNo) {
-//						Helper.out("removing subprocess "+subNo+" for "+i+" job");
-//						procForSubprocess.getRootOperator().removeSubprocess(
-//								subNo);
-//					}
-//				}
-//				Helper.saveToFile("subprocess_"+i, procForSubprocess
-//						.getRootOperator().getXML(false));
-				String xml = xmlTools.processXML(this, this.getXML(false), "Dupa",
+
+				String xml = xmlTools.processXML(this, this.getXML(false), "",
 						"Select Subprocess",i);
 				RemoteJob job = helper.createJob(xml, dataKeys, macros);
 
@@ -177,63 +136,30 @@ public class SelectSubprocessOperator extends OperatorChain {
 
 			HashMap<Integer, ArrayList<IOObject>> toOutput = new HashMap<Integer, ArrayList<IOObject>>();
 
-			Helper.out("jobs.size()=" + jobList.size());
-
+			Helper.out("Jobs created: "+jobList.size());
 			List<Future<String>> resultKeys;
 			ExecutorService exec = helper.getExecutorService();
 
 			resultKeys = exec.invokeAll(jobList);
 
-			if (resultKeys != null) {
-				Helper.out("resultKeys size: " + resultKeys.size());
-				if (resultKeys.size() > 0) {
-					Integer node = 0;
-					for (Future<String> nodeResult : resultKeys) {
-						String keys = nodeResult.get();
-						if (keys != null) {
-							String[] values = keys.split(";");
-							Integer portNo = 0;
-							Helper.out("Job result = [" + keys + "]");
-							for (String value : values) {
-								Helper.out("retrive: [" + ((String) value)
-										+ "]");
-								IOObject io = helper.retriveResult(value);
+			toOutput = helper.resultKeysToOutput(resultKeys);
 
-								if (toOutput.get(portNo) == null) {
-									toOutput.put(portNo,
-											new ArrayList<IOObject>());
-								}
-								if (io != null) {
-									toOutput.get(portNo).add(io);
-									portNo++;
-								} else {
-									Helper.out("IO IS NULL!");
-								}
-							}
-						}
-					}
-				}
-			}
 
-			Helper.out("toOutput:" + toOutput.size());
 			for (int i : toOutput.keySet()) {
 
 				IOObjectCollection<IOObject> ioc = new IOObjectCollection<IOObject>(
 						toOutput.get(i));
 
 				OutputPort o = getOutputPorts().getPortByIndex(i);
-				Helper.out("Output Name: " + o.getName());
 				o.deliver(ioc);
 			}
-			Helper.out("first option");
 
-			Helper.out("Loop doWork(); finished");
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+			throw new OperatorException("Interupted Exception", e);
 		} catch (ExecutionException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+			throw new OperatorException("Execution Exception", e);
 		} catch (Exception exc) {
 			throw new OperatorException("Something new", exc);
 		}

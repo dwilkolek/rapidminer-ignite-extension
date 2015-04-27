@@ -6,33 +6,19 @@ import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-
-import org.springframework.expression.spel.ast.OpNE;
-import org.w3c.dom.Document;
-
 import com.rapidminer.Process;
-import com.rapidminer.io.process.XMLExporter;
-import com.rapidminer.operator.ExecutionUnit;
 import com.rapidminer.operator.Operator;
 import com.rapidminer.operator.OperatorChain;
-import com.rapidminer.operator.OperatorException;
 import com.rapidminer.operator.ports.PortException;
 import com.rapidminer.tools.XMLException;
 
-import eu.wilkolek.pardi.operator.ignite.Job;
-import eu.wilkolek.pardi.operator.rapidminer.ExecutionUnitContainer;
-import eu.wilkolek.pardi.types.rapidminer.IOString;
+import eu.wilkolek.pardi.ignite.Job;
+import eu.wilkolek.pardi.types.IOString;
 
 public class XMLTools {
 	
-	public static String PROLOG = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?> \n <process version=\"5.3.015\"> \n   <context> \n     <input/> \n     <output/> \n     <macros/> \n   </context> \n   <operator activated=\"true\" class=\"process\" compatibility=\"5.3.015\" expanded=\"true\" name=\"Process\"> \n     <parameter key=\"logverbosity\" value=\"init\"/> \n     <parameter key=\"random_seed\" value=\"2001\"/> \n     <parameter key=\"send_mail\" value=\"never\"/> \n     <parameter key=\"notification_email\" value=\"\"/> \n     <parameter key=\"process_duration_for_mail\" value=\"30\"/> \n     <parameter key=\"encoding\" value=\"SYSTEM\"/> \n     <process expanded=\"true\"> \n ";
-	public static String EPILOG = "<portSpacing port=\"source_input 1\" spacing=\"0\"/> \n       <portSpacing port=\"sink_result 1\" spacing=\"0\"/> \n     </process> \n   </operator> \n </process> \n ";
+	final private String PROLOG = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?> \n <process version=\"5.3.015\"> \n   <context> \n     <input/> \n     <output/> \n     <macros/> \n   </context> \n   <operator activated=\"true\" class=\"process\" compatibility=\"5.3.015\" expanded=\"true\" name=\"Process\"> \n     <parameter key=\"logverbosity\" value=\"init\"/> \n     <parameter key=\"random_seed\" value=\"2001\"/> \n     <parameter key=\"send_mail\" value=\"never\"/> \n     <parameter key=\"notification_email\" value=\"\"/> \n     <parameter key=\"process_duration_for_mail\" value=\"30\"/> \n     <parameter key=\"encoding\" value=\"SYSTEM\"/> \n     <process expanded=\"true\"> \n ";
+	final private String EPILOG = "<portSpacing port=\"source_input 1\" spacing=\"0\"/> \n       <portSpacing port=\"sink_result 1\" spacing=\"0\"/> \n     </process> \n   </operator> \n </process> \n ";
 
 	
 	public String processXML(
@@ -40,7 +26,7 @@ public class XMLTools {
 			final String xmlOriginal,
 			final String xmlSink, 
 			final Integer quantity) {
-		Helper.saveToFile("before", xmlOriginal);
+//		Helper.saveToFile("before", xmlOriginal);
 		String xml;
 		StringBuilder builder = new StringBuilder();
 		StringWriter writer = new StringWriter();
@@ -58,7 +44,7 @@ public class XMLTools {
 //							"\""+Config.JOBEvaluator+"\"");
 		
 		String xml2Append = "";
-		Helper.saveToFile("before1", xml);
+//		Helper.saveToFile("before1", xml);
 		Boolean startAppending = false;
 		Scanner scanner = new Scanner(xml);
 		String[] lines = xml.split(System.getProperty("line.separator"));
@@ -93,35 +79,35 @@ public class XMLTools {
 		builder.append(EPILOG);
 		
 		try {
-			Helper.saveToFile("beforeProcB", builder.toString());
+//			Helper.saveToFile("beforeProcB", builder.toString());
 			Process proc = new Process(builder.toString());
-			Helper.saveToFile("beforeProcA", builder.toString());
-			Helper.out("Subprocess innersources ports : "
-					+ proc.getRootOperator().getSubprocess(0).getInnerSources()
-							.getNumberOfPorts());
-			for (Operator o : proc.getAllOperators()){
-				Helper.out(o.getName()+"--" + o.getClass().getSimpleName());
-			}
+//			Helper.saveToFile("beforeProcA", builder.toString());
+//			Helper.out("Subprocess innersources ports : "
+//					+ proc.getRootOperator().getSubprocess(0).getInnerSources()
+//							.getNumberOfPorts());
+//			for (Operator o : proc.getAllOperators()){
+//				Helper.out(o.getName()+"--" + o.getClass().getSimpleName());
+//			}
 			for (int port = 1; port < proc.getOperator(opName)
 					.getInputPorts().getNumberOfPorts() + 1; port++) {
 				try {
 
 					proc.getRootOperator().getSubprocess(0).getInnerSources()
 							.createPort("input " + port);
-					Helper.out("creating port " + "input " + port);
+//					Helper.out("creating port " + "input " + port);
 				} catch (PortException e) {
-					Helper.out("creating port " + "input " + port
-							+ " ! WAS EXISTING !");
+//					Helper.out("creating port " + "input " + port
+//							+ " ! WAS EXISTING !");
 				}
 			}
 
-			Helper.out("WIll connect "
-					+ proc.getOperator(opName).getInputPorts()
-							.getNumberOfPorts());
+//			Helper.out("WIll connect "
+//					+ proc.getOperator(opName).getInputPorts()
+//							.getNumberOfPorts());
 
 			for (int port = 0; port < proc.getOperator(opName)
 					.getInputPorts().getNumberOfPorts() - 1; port++) {
-				Helper.out("Connecting port #" + port);
+//				Helper.out("Connecting port #" + port);
 
 				if (!proc.getRootOperator().getSubprocess(0).getInnerSources()
 						.getPortByIndex(port).isConnected()
@@ -136,12 +122,12 @@ public class XMLTools {
 											.getInputPorts()
 											.getPortByIndex(port));
 
-					Helper.out("Stan (TASK): "
-							+ proc.getOperator(opName).getInputPorts()
-									.getNumberOfConnectedPorts()
-							+ "/"
-							+ (proc.getOperator(opName).getInputPorts()
-									.getNumberOfPorts()-1));
+//					Helper.out("Stan (TASK): "
+//							+ proc.getOperator(opName).getInputPorts()
+//									.getNumberOfConnectedPorts()
+//							+ "/"
+//							+ (proc.getOperator(opName).getInputPorts()
+//									.getNumberOfPorts()-1));
 				}
 			}
 			/*
@@ -151,19 +137,19 @@ public class XMLTools {
 			 * 
 			 * + ".xml"); fileProc.createNewFile(); proc.save(fileProc);
 			 */
-			Helper.out("returning xml from PROCESS");
+//			Helper.out("returning xml from PROCESS");
 			
-				Helper.saveToFile("test", proc.getRootOperator()
-						.getXML(false));
+//				Helper.saveToFile("test", proc.getRootOperator()
+//						.getXML(false));
 			
 			return proc.getRootOperator().getXML(false);
 		} catch (IOException | XMLException e) {
 			e.printStackTrace();
 		}
 
-			Helper.saveToFile("test", builder.toString());
+//			Helper.saveToFile("test", builder.toString());
 
-		Helper.out("returning xml from TASK");
+//		Helper.out("returning xml from TASK");
 		return builder.toString();
 	}
 	public String processXML(
@@ -179,7 +165,7 @@ public class XMLTools {
 			final String newOperatorName,
 			final String operatorClass,
 			final Integer subprocess) {
-		Helper.saveToFile("before", xmlOriginal);
+//		Helper.saveToFile("before", xmlOriginal);
 		String xml;
 		Operator op = operator.cloneOperator("Process", true);
 		if (subprocess !=null){
@@ -195,15 +181,10 @@ public class XMLTools {
 		xml = xml.replace("compatibility=\"1.0.000\"", "compatibility=\"5.3.015\"");
 		xml = xml.replaceFirst(	"class=\""+Config.extensionName+":"+operatorClass+"\"",
 							"class=\"process\"");
-		Helper.saveToFile("before1", xml);
-		String xml_connections = "";
-//		for (String line : xml.split(System.getProperty("line.separator"))){
-//			if (operator.getName().equals(getOpNameFromLine(line))){
-//				line = line.replace("gin", "input").replace("gou", "result");
-//			}
-//			xml_connections += line;
-//		}
-		Helper.saveToFile("before1x", xml);
+//		Helper.saveToFile("before1", xml);
+//		String xml_connections = "";
+
+//		Helper.saveToFile("before1x", xml);
 		
 		
 		
@@ -226,9 +207,9 @@ public class XMLTools {
 		Matcher matcher = opPattern.matcher(line);
 		if (matcher.find()){
 			String name = matcher.group(0);
-			Helper.out("Found name: "+name);
+//			Helper.out("Found name: "+name);
 			name = name.replace("\"","").replace("name=","");
-			Helper.out("Returning after replacement: "+name);
+//			Helper.out("Returning after replacement: "+name);
 			return name;
 		}
 		return null;
@@ -272,13 +253,13 @@ public class XMLTools {
 	}
 	
 	public IOString selectSubproces(int nodeId, final IOString xml) {
-		Helper.out("select subprocess ");
-		Helper.saveToFile("selectSubprocess"+nodeId, xml.getSource());
+//		Helper.out("select subprocess ");
+//		Helper.saveToFile("selectSubprocess"+nodeId, xml.getSource());
 		IOString processingText = xml;
 		String patternString = "class=\""+Config.extensionName+":"+Config.JOBSubprocessEvaluator+"\"";
 		String selected = "";
 		// Pattern pattern = Pattern.compile(patternString);
-		Helper.out("select subprocess :"+patternString);
+//		Helper.out("select subprocess :"+patternString);
 		boolean nextLineIsTheOneToProcess = false;	
 
 		String[] lines = processingText.getSource().split(
@@ -288,7 +269,7 @@ public class XMLTools {
 			// Matcher matcher = pattern.matcher(line);
 
 			if (line.contains(patternString)) {
-				Helper.out(line);
+//				Helper.out(line);
 				// Configurator.out("FOUND LINE WITH SubprocessDeclaration\n"+line);
 				line += System.getProperty("line.separator")
 						+ "<parameter key=\"select_which\" value=\"" + nodeId
@@ -298,7 +279,7 @@ public class XMLTools {
 
 			selected += line + "\n";
 		}
-		Helper.saveToFile("selectSubprocessReturn"+nodeId, xml.getSource());
+//		Helper.saveToFile("selectSubprocessReturn"+nodeId, xml.getSource());
 		return new IOString(selected);
 	}
 	
@@ -308,55 +289,18 @@ public class XMLTools {
 		Pattern namePattern = Pattern.compile(nameP);
 		Pattern classPattern = Pattern.compile(classP);
 		Matcher matcher = classPattern.matcher(xml);
-		Helper.out("getOpNameForJob with classP:"+classP);
+//		Helper.out("getOpNameForJob with classP:"+classP);
 		String[] lines = xml.split(System.getProperty("line.separator"));
 		for (String line : lines){
 			if (line.contains(classP)){
-				Helper.out("Found line: "+line);
+//				Helper.out("Found line: "+line);
 				return getOpNameFromLine(line);
 			}
 		}
 		return null;
 	}
 
-	public String createProcessXmlFromSubprocess(Operator op, String input, String output, String opName){
-		XMLExporter xmlExporter = new XMLExporter();
-		try {
-			ExecutionUnitContainer euc = new ExecutionUnitContainer(op.getOperatorDescription());
-
-			//1
-			
-			Document doc = xmlExporter.exportSingleOperator(op);
-			DOMSource domSource = new DOMSource(doc);
-			StringWriter writer = new StringWriter();
-			StreamResult result = new StreamResult(writer);
-			TransformerFactory tf = TransformerFactory.newInstance();
-			Transformer transformer = tf.newTransformer();
-			transformer.transform(domSource, result);
-			
-			Helper.saveToFile("xmlExport", writer.toString());
-			
-			String operatorXml = writer.toString();
-			
-			//2
-			Process proc = new Process();
-			proc.getRootOperator().addOperator(euc, 1);
-			String operatorXml2 = proc.getRootOperator().getXML(false);
-			Helper.saveToFile("xmlExport2", writer.toString());
-			return operatorXml2;
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (TransformerConfigurationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (TransformerException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		return "";
-	}
+	
 
 	
 

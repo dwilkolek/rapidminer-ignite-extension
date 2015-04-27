@@ -6,44 +6,44 @@
 			<group key="Ignite">
 				<operator>
 					<key>Job</key>
-					<class>eu.wilkolek.pardi.operator.ignite.Job</class>
+					<class>eu.wilkolek.pardi.ignite.Job</class>
 					<replaces>TextInformationExtraction</replaces>
 				</operator>
 				
 				<operator>
 					<key>Job Evaluator</key>
-					<class>eu.wilkolek.pardi.operator.ignite.JobEvaluator</class>
+					<class>eu.wilkolek.pardi.ignite.JobEvaluator</class>
 					<replaces>TextInformationExtraction</replaces>
 				</operator>
 	
 				<operator>
 					<key>Job Subprocess</key>
-					<class>eu.wilkolek.pardi.operator.ignite.JobSubprocess</class>
+					<class>eu.wilkolek.pardi.ignite.JobSubprocess</class>
 					<replaces>TextInformationExtraction</replaces>
 				</operator>
 				
 				<operator>
 					<key>Job Subprocess Evaluator</key>
-					<class>eu.wilkolek.pardi.operator.ignite.JobSubprocessEvaluator</class>
+					<class>eu.wilkolek.pardi.ignite.JobSubprocessEvaluator</class>
 					<replaces>TextInformationExtraction</replaces>
 				</operator>	
 			</group>
 			<group key="Job Managers">
 				<operator>
 					<key>Ignite</key>
-					<class>eu.wilkolek.pardi.operator.ignite.IgniteJobManager</class>
+					<class>eu.wilkolek.pardi.ignite.IgniteJobManager</class>
 					<replaces>TextInformationExtraction</replaces>
 				</operator>		
 			</group>
 			<group key="Universal blocks">
 				<operator>
 					<key>Loop</key>
-					<class>eu.wilkolek.pardi.operator.rapidminer.LoopOperator</class>
+					<class>eu.wilkolek.pardi.rapidminer.LoopOperator</class>
 					<replaces>TextInformationExtraction</replaces>
 				</operator>
 				<operator>
 					<key>Select Subprocess</key>
-					<class>eu.wilkolek.pardi.operator.rapidminer.SelectSubprocessOperator</class>
+					<class>eu.wilkolek.pardi.rapidminer.SelectSubprocessOperator</class>
 					<replaces>TextInformationExtraction</replaces>
 				</operator>	
 			</group>
