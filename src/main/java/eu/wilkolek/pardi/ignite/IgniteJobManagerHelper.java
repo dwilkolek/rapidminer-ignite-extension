@@ -443,6 +443,7 @@ public class IgniteJobManagerHelper extends AbstractJobManagerHelper {
 	public RemoteJob createJob(String xml, HashMap<Integer, String> dataKeys,
 			HashMap<String, String> macros) {
 //		Helper.out("UUID : " + uuid);
+		
 		return new RemoteJob(xml, dataKeys, macros,
 				IgniteJobManagerHelper.class.getName(), uuid);
 	}
