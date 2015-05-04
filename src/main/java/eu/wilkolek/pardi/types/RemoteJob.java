@@ -43,16 +43,13 @@ public class RemoteJob implements Callable<String>, Serializable {
 	@IgniteInstanceResource
 	Ignite ignite;
 
-	private String masterNodeId;
 	private String helperName;
 
 	public RemoteJob(String xml, HashMap<Integer, String> dataKeys,
-			HashMap<String, String> macros, String helperName,
-			String masterNodeId) {
+			HashMap<String, String> macros, String helperName) {
 		this.xml = xml;
 		this.dataKeys = dataKeys;
 		this.macros = macros;
-		this.masterNodeId = masterNodeId;
 		this.helperName = helperName;
 
 	}
@@ -188,7 +185,7 @@ public class RemoteJob implements Callable<String>, Serializable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		helper.prepareForRemoteJob(ignite, masterNodeId);
+		helper.prepareForRemoteJob(ignite);
 	}
 
 }

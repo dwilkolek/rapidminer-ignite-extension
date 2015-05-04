@@ -50,14 +50,13 @@ public class IgniteJobManager extends AbstractJobManager<IgniteRemoteJob> {
 		BeanHandler.getInstance().setCurrentBean("ignite");
 
 		UUID uuid = helper.ignite.cluster().localNode().id();
-		helper.uuid = uuid.toString();
 
 		if (getParameterAsBoolean(INIT_REMOTE_NODES) && needInit) {
 
 			RemoteJob job = new RemoteJob(xmlInitRemote,
 					new HashMap<Integer, String>(),
 					new HashMap<String, String>(),
-					IgniteJobManagerHelper.class.getName(), uuid.toString());
+					IgniteJobManagerHelper.class.getName());
 			ArrayList<RemoteJob> jobList = new ArrayList<RemoteJob>();
 			for (int jn = 0; jn < helper.nodeCount(); jn++) {
 				jobList.add(job);
