@@ -215,10 +215,6 @@ public class IgniteJobManagerHelper extends AbstractJobManagerHelper {
 		return ignite.executorService(workerGroup);
 	}
 
-	public int nodeCout() {
-		return this.ignite.cluster().forRemotes().nodes().size();
-	}
-
 	@Override
 	public void prepareForRemoteJob(Object instance) {
 		//this.uuid = masterNodeId;
