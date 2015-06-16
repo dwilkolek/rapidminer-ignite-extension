@@ -50,6 +50,8 @@ public class SelectSubprocessOperator extends OperatorChain {
 					getSubprocess(0).getInnerSinks(),
 					getSubprocess(1).getInnerSinks() });
 
+	private XMLTools xmlTools = new XMLTools();
+	
 	AbstractJobManagerHelper helper = BeanHandler.getInstance()
 			.getCurrentBean();
 
@@ -119,7 +121,7 @@ public class SelectSubprocessOperator extends OperatorChain {
 				dataKeys.put(a, key);
 				a++;
 			}
-			XMLTools xmlTools = new XMLTools();
+			
 			
 			MacroHandler macroHandler = getRoot().getProcess()
 					.getMacroHandler();

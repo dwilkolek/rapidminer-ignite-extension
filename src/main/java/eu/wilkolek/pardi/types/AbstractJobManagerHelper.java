@@ -78,8 +78,7 @@ public abstract class AbstractJobManagerHelper implements Serializable {
 	abstract public RemoteJob createJob(String xml,
 			HashMap<Integer, String> dataKeys, HashMap<String, String> macros);
 
-	abstract public void prepareForRemoteJob(Object instance,
-			String masterNodeId);
+	abstract public void prepareForRemoteJob(Object instance);
 
 	abstract public HashMap<Integer, ArrayList<IOObject>> resultKeysToOutput(
 			List<Future<String>> resultKeys) throws InterruptedException,

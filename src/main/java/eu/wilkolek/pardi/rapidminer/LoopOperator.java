@@ -1,12 +1,14 @@
 package eu.wilkolek.pardi.rapidminer;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import com.rapidminer.MacroHandler;
 import com.rapidminer.operator.IOContainer;
@@ -69,6 +71,7 @@ public class LoopOperator extends OperatorChain {
 
 	@Override
 	public void doWork() throws OperatorException {
+		Long start = System.currentTimeMillis();
 		try {
 			helper = BeanHandler.getInstance().getCurrentBean();
 			if (helper == null) {
@@ -144,9 +147,10 @@ public class LoopOperator extends OperatorChain {
 			ExecutorService exec = helper.getExecutorService();
 			
 			resultKeys = exec.invokeAll(jobs);
-
+			exec.shutdown();
+			exec.awaitTermination(5, TimeUnit.HOURS);
 			toOutput = helper.resultKeysToOutput(resultKeys);
-			Helper.out("Jobs executed successfully: "+resultKeys.size()+"/"+jobs.size());
+			//Helper.out("Jobs executed successfully: "+resultKeys.size()+"/"+jobs.size());
 			for (int i : toOutput.keySet()) {
 
 				IOObjectCollection<IOObject> ioc = new IOObjectCollection<IOObject>(
@@ -156,12 +160,17 @@ public class LoopOperator extends OperatorChain {
 
 				o.deliver(ioc);
 			}
+			Long end = System.currentTimeMillis();
+			Long diff = end - start;
+			
+			Helper.out("Loop("+resultKeys.size()+"/"+jobs.size()+") in: " + diff.toString()+" s");
 
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 			throw new OperatorException("Interupted Exception", e);
 		} catch (ExecutionException e) {
 			e.printStackTrace();
+			
 			throw new OperatorException("Execution Exception", e);
 		} catch (Exception exc) {
 			throw new OperatorException("Something new", exc);

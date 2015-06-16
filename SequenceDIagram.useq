@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence-diagram version="1.1.8" icons="true" automaticImage="PNG">  
+  <object id="1" language="java" name="eu.wilkolek.pardi.util.XMLTools" project="rapidminer-pardiextension" 
+    file="/rapidminer-pardiextension/src/main/java/eu/wilkolek/pardi/util/XMLTools.java" binary="false" label="xmlTools" 
+    type="class" autoSize="true">    
+    <position height="-1" width="-1" x="316" y="0"/>  
+  </object>  
+  <object id="2" language="java" name="eu.wilkolek.pardi.util.PluginClassLoader" project="rapidminer-pardiextension" 
+    file="/rapidminer-pardiextension/src/main/java/eu/wilkolek/pardi/util/PluginClassLoader.java" binary="false" 
+    label="pluginClassLoader" type="class" autoSize="true">    
+    <position height="-1" width="-1" x="316" y="0"/>  
+  </object>  
+  <object id="3" language="java" name="eu.wilkolek.pardi.util.BeanHandler" project="rapidminer-pardiextension" 
+    file="/rapidminer-pardiextension/src/main/java/eu/wilkolek/pardi/util/BeanHandler.java" binary="false" 
+    label="beanHandler" type="class" autoSize="true">    
+    <position height="-1" width="-1" x="316" y="0"/>  
+  </object>  
+  <object id="4" language="java" name="eu.wilkolek.pardi.types.RemoteJob" project="rapidminer-pardiextension" 
+    file="/rapidminer-pardiextension/src/main/java/eu/wilkolek/pardi/types/RemoteJob.java" binary="false" 
+    label="remoteJob" type="class" autoSize="true">    
+    <position height="-1" width="-1" x="316" y="0"/>  
+  </object>  
+  <object id="5" language="java" name="eu.wilkolek.pardi.types.AbstractJobManagerHelper" 
+    project="rapidminer-pardiextension" 
+    file="/rapidminer-pardiextension/src/main/java/eu/wilkolek/pardi/types/AbstractJobManagerHelper.java" binary="false" 
+    label="abstractJobManagerHelper" type="class" autoSize="true">    
+    <position height="-1" width="-1" x="316" y="0"/>  
+  </object>  
+  <object id="6" language="java" name="eu.wilkolek.pardi.types.AbstractJobManager" project="rapidminer-pardiextension" 
+    file="/rapidminer-pardiextension/src/main/java/eu/wilkolek/pardi/types/AbstractJobManager.java" binary="false" 
+    label="abstractJobManager" type="class" autoSize="true">    
+    <position height="-1" width="-1" x="316" y="0"/>  
+  </object>  
+  <object id="7" language="java" name="eu.wilkolek.pardi.rapidminer.SelectSubprocessOperator" 
+    project="rapidminer-pardiextension" 
+    file="/rapidminer-pardiextension/src/main/java/eu/wilkolek/pardi/rapidminer/SelectSubprocessOperator.java" 
+    binary="false" label="selectSubprocessOperator" type="class" autoSize="true">    
+    <position height="-1" width="-1" x="316" y="0"/>  
+  </object>  
+  <object id="8" language="java" name="eu.wilkolek.pardi.rapidminer.LoopOperator" project="rapidminer-pardiextension" 
+    file="/rapidminer-pardiextension/src/main/java/eu/wilkolek/pardi/rapidminer/LoopOperator.java" binary="false" 
+    label="loopOperator" type="class" autoSize="true">    
+    <position height="-1" width="-1" x="316" y="0"/>  
+  </object>  
+  <object id="9" language="java" name="eu.wilkolek.pardi.ignite.IgniteJobManagerHelper" 
+    project="rapidminer-pardiextension" 
+    file="/rapidminer-pardiextension/src/main/java/eu/wilkolek/pardi/ignite/IgniteJobManagerHelper.java" binary="false" 
+    label="igniteJobManagerHelper" type="class" autoSize="true">    
+    <position height="-1" width="-1" x="316" y="0"/>    
+    <execution id="10">      
+      <position height="21" width="162" x="1104" y="265"/>    
+    </execution>  
+  </object>  
+  <object id="11" language="java" name="eu.wilkolek.pardi.ignite.IgniteJobManager" project="rapidminer-pardiextension" 
+    file="/rapidminer-pardiextension/src/main/java/eu/wilkolek/pardi/ignite/IgniteJobManager.java" binary="false" 
+    label="igniteJobManager" type="class" autoSize="true">    
+    <position height="-1" width="-1" x="316" y="0"/>    
+    <execution id="12">      
+      <position height="63" width="125" x="1270" y="244"/>    
+    </execution>  
+  </object>  
+  <message id="13">    
+    <end type="SOURCE" refId="12"/>    
+    <end type="TARGET" refId="10"/>  
+  </message>
+</sequence-diagram>
